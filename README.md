@@ -1,4 +1,5 @@
-# CSSP
+# CS4523 Project: A Comparative Study of Deterministic and Randomized Approaches to Column Subset Selection for Low-Rank Matrix Approximation
+
 
 ```text
                      INPUT MATRIX A
