@@ -1,18 +1,34 @@
-# Comparative Column Subset Selection Pipelines
 
-This project compares deterministic and randomized approaches to column
-subset selection for low-rank matrix approximation. It implements the full
-2 x 2 experiment:
+# CS4523 Project: A Comparative Study of Deterministic and Randomized Approaches to Column Subset Selection for Low-Rank Matrix Approximation
 
-| Pipeline | Row-space stage | Column selection |
-|---|---|---|
-| `deterministic_osinsky` | Exact truncated SVD | Osinsky |
-| `deterministic_arp` | Exact truncated SVD | ARP |
-| `randomized_osinsky` | Randomized SVD | Osinsky |
-| `randomized_arp` | Randomized SVD | ARP |
+```text
+                     INPUT MATRIX A
+                          │
+             ┌────────────┴────────────┐
+             │                         │
+      ROW-SPACE STAGE           ROW-SPACE STAGE
+      Deterministic              Randomized
+      Truncated SVD              Randomized Sketch/SVD
+             │                         │
+             └────────────┬────────────┘
+                          │
+                 DOMINANT ROW SPACE
+                          │
+             ┌────────────┴────────────┐
+             │                         │
+       COLUMN SELECTION          COLUMN SELECTION
+         Osinsky (D)               ARP (R)
+             │                         │
+             └────────────┬────────────┘
+                          │
+                 SELECTED COLUMNS C
+                          │
+                   RECONSTRUCTION
+                          │
+                       METRICS
 
-The ARP Householder update and Osinsky residual update follow the authors'
-MATLAB reference implementation under `ARP/ARP/selection_methods`.
+
+```
 
 ## Run the progress demo
 
