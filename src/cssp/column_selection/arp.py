@@ -1,47 +1,9 @@
-"""
-Adaptive Randomized Pivoting (ARP) for Column Subset Selection.
+"""Adaptive Randomized Pivoting (ARP) for column subset selection.
 
-Based on:
-
-A. Cortinovis and D. Kressner,
-"Adaptive Randomized Pivoting for Column Subset Selection,
-DEIM, and Low-Rank Approximation",
-SIAM Journal on Matrix Analysis and Applications,
-Vol. 47, Issue 1, 2026.
-
-ARP can be viewed as a randomization of Osinsky's deterministic
-CSSP algorithm.
-
-Core idea:
-
-    1. Compute an orthonormal basis V for the dominant right
-       singular subspace of A.
-
-    2. At each step, compute adaptive leverage probabilities
-
-          p_j = ||V_work[j, :]||² / remaining_rank
-
-    3. Randomly select one column according to p_j.
-
-    4. Remove the selected direction from V_work.
-
-    5. Repeat until k columns are selected.
-
-The same residual/basis update structure is used as the
-deterministic Osinsky procedure.
-
-Input:
-    A : m x n matrix
-    k : number of columns to select
-
-Output:
-    indices : selected column indices
-    C       : selected columns
-    A_hat    : CSSP approximation
-    error    : reconstruction error
-
-A random_state argument is provided so that experiments can be
-reproduced.
+The selector follows Algorithm 2.2 of Cortinovis and Kressner. Its main
+input is an already-computed ``n x k`` orthonormal row-space basis ``V``.
+Keeping basis construction outside the selector lets the same algorithm be
+used with either an exact truncated SVD or a randomized SVD.
 """
 
 from __future__ import annotations
@@ -53,417 +15,173 @@ from numpy.typing import NDArray
 Array = NDArray[np.float64]
 
 
-def _validate_input(A: Array, k: int) -> None:
-    """Validate CSSP input."""
-    if A.ndim != 2:
-        raise ValueError("A must be a 2-D matrix.")
+def _as_orthonormal_basis(V: Array) -> Array:
+    """Validate and copy an ``n x k`` matrix with orthonormal columns."""
+    V = np.asarray(V, dtype=float)
+    if V.ndim != 2:
+        raise ValueError("V must be a 2-D matrix.")
 
-    m, n = A.shape
-
-    if not 1 <= k <= min(m, n):
+    n, k = V.shape
+    if not 1 <= k <= n:
         raise ValueError(
-            f"k must satisfy 1 <= k <= min(m, n). "
-            f"Got k={k}, matrix shape={A.shape}."
+            f"V must have shape (n, k) with 1 <= k <= n; got {V.shape}."
         )
+    if not np.all(np.isfinite(V)):
+        raise ValueError("V must contain only finite values.")
+
+    gram_error = np.linalg.norm(V.T @ V - np.eye(k), ord="fro")
+    tolerance = 1e-8 * max(1, k)
+    if gram_error > tolerance:
+        raise ValueError(
+            "The columns of V must be orthonormal. "
+            f"||V.T @ V - I||_F = {gram_error:.3e}."
+        )
+    return V.copy()
 
 
-def _orthonormal_row_space(A: Array, k: int) -> Array:
-    """
-    Compute V_k, an n x k orthonormal matrix containing
-    the dominant right singular subspace of A.
-    """
-    _, _, Vt = np.linalg.svd(
-        A,
-        full_matrices=False,
-    )
+def _householder_vector(x: Array) -> Array | None:
+    """Return a stable unit vector defining a Householder reflector."""
+    norm_x = float(np.linalg.norm(x))
+    if norm_x == 0.0:
+        return None
 
-    return Vt[:k, :].T
+    v = np.asarray(x, dtype=float).copy()
+    alpha = -np.copysign(norm_x, v[0])
+    v[0] -= alpha
+    norm_v = float(np.linalg.norm(v))
+    if norm_v <= np.finfo(float).eps * norm_x:
+        return None
+    return v / norm_v
 
 
-def _project_out_selected_row(
+def arp_select(
     V: Array,
-    j: int,
-) -> Array:
+    random_state: int | np.random.Generator | None = None,
+    verbose: bool = False,
+    return_probabilities: bool = False,
+) -> Array | tuple[Array, list[Array]]:
+    """Select exactly ``k`` row indices from an ``n x k`` basis using ARP.
+
+    At step ``s``, index ``j`` is sampled with probability proportional to
+    ``||V_work[j, s:k]||_2^2``. A Householder update then eliminates the
+    sampled direction from all later probability distributions.
+
+    Parameters
+    ----------
+    V:
+        Orthonormal row-space basis of shape ``(n, k)``.
+    random_state:
+        Seed or NumPy random generator used for sampling.
+    verbose:
+        Print the selected index and probability at each step.
+    return_probabilities:
+        If true, also return a copy of every sampling distribution.
     """
-    Remove the selected row direction from V.
+    V_work = _as_orthonormal_basis(V)
+    n, k = V_work.shape
 
-    If v = V[j,:], then
-
-        V_new = V - (V v^T / ||v||²) v
-
-    projects the remaining row-space information onto the
-    orthogonal complement of the selected row.
-
-    An SVD is then used to obtain an orthonormal basis for
-    the remaining subspace.
-    """
-    row = V[j, :]
-
-    row_norm_sq = np.dot(
-        row,
-        row,
+    rng = (
+        random_state
+        if isinstance(random_state, np.random.Generator)
+        else np.random.default_rng(random_state)
     )
 
-    if row_norm_sq <= np.finfo(float).eps:
-        raise RuntimeError(
-            "Selected row has numerically zero norm."
-        )
+    selected: list[int] = []
+    probability_history: list[Array] = []
 
-    V_projected = (
-        V
-        - np.outer(V @ row, row)
-        / row_norm_sq
-    )
+    for step in range(k):
+        trailing = V_work[:, step:]
+        weights = np.sum(trailing * trailing, axis=1)
+        weights = np.maximum(weights, 0.0)
+        if selected:
+            weights[np.asarray(selected, dtype=int)] = 0.0
 
-    U, S, _ = np.linalg.svd(
-        V_projected,
-        full_matrices=False,
-    )
+        total = float(np.sum(weights))
+        if not np.isfinite(total) or total <= np.finfo(float).eps:
+            raise RuntimeError("No valid ARP sampling probability remains.")
 
-    if len(S) == 0:
-        return np.empty(
-            (V.shape[0], 0)
-        )
+        probabilities = weights / total
+        probability_history.append(probabilities.copy())
+        pivot = int(rng.choice(n, p=probabilities))
+        selected.append(pivot)
 
-    tol = (
-        max(V.shape)
-        * np.finfo(float).eps
-        * S[0]
-    )
+        if verbose:
+            print(
+                f"ARP step {step + 1}/{k}: column={pivot}, "
+                f"probability={probabilities[pivot]:.6e}"
+            )
 
-    rank = np.sum(S > tol)
+        if step < k - 1:
+            reflector = _householder_vector(V_work[pivot, step:])
+            if reflector is not None:
+                product = V_work[:, step:] @ reflector
+                V_work[:, step:] -= 2.0 * np.outer(product, reflector)
 
-    if rank == 0:
-        return np.empty(
-            (V.shape[0], 0)
-        )
+            # Zero in exact arithmetic; enforce it to prevent reselection from
+            # accumulated floating-point roundoff.
+            V_work[pivot, step + 1 :] = 0.0
 
-    return U[:, :rank]
+    indices = np.asarray(selected, dtype=int)
+    if np.unique(indices).size != k:
+        raise RuntimeError("ARP produced duplicate indices.")
+    if np.linalg.matrix_rank(np.asarray(V)[indices, :]) < k:
+        raise RuntimeError("ARP selected a numerically singular V[indices, :].")
 
-
-def _compute_approximation(
-    A: Array,
-    V: Array,
-    indices: list[int],
-) -> Array:
-    """
-    Construct the CSSP approximation
-
-        A_hat = A[:,J] V[J,:]^{-T} V^T.
-
-    The pseudoinverse is used for numerical stability.
-    """
-    J = np.asarray(
-        indices,
-        dtype=int,
-    )
-
-    VJ = V[J, :]
-
-    interpolation = np.linalg.pinv(
-        VJ.T
-    )
-
-    return (
-        A[:, J]
-        @ interpolation
-        @ V.T
-    )
+    if return_probabilities:
+        return indices, probability_history
+    return indices
 
 
 def arp_cssp(
     A: Array,
     k: int,
-    random_state: int | None = None,
+    random_state: int | np.random.Generator | None = None,
     verbose: bool = False,
+    V: Array | None = None,
 ) -> dict:
+    """Backward-compatible convenience wrapper around :func:`arp_select`.
+
+    If ``V`` is omitted, an exact top-``k`` right singular basis is computed.
+    The returned approximation is the paper's oblique interpolatory one.
+    New experiments should use ``arp_select`` or ``run_cssp_pipeline``.
     """
-    Adaptive Randomized Pivoting for CSSP.
+    A = np.asarray(A, dtype=float)
+    if A.ndim != 2:
+        raise ValueError("A must be a 2-D matrix.")
+    if not 1 <= k <= min(A.shape):
+        raise ValueError(f"k must satisfy 1 <= k <= min(A.shape); got {k}.")
 
-    Parameters
-    ----------
-    A:
-        Input matrix of shape (m, n).
-
-    k:
-        Number of columns to select.
-
-    random_state:
-        Seed for reproducibility.
-
-    verbose:
-        Print intermediate steps and probabilities.
-
-    Returns
-    -------
-    result:
-        Dictionary containing:
-
-        indices
-            Selected column indices.
-
-        C
-            Selected matrix A[:, indices].
-
-        V
-            Dominant right singular subspace.
-
-        probabilities
-            Sampling probabilities used at each step.
-
-        approximation
-            CSSP approximation.
-
-        error
-            Frobenius reconstruction error.
-
-        relative_error
-            Relative Frobenius reconstruction error.
-    """
-    A = np.asarray(
-        A,
-        dtype=float,
-    )
-
-    _validate_input(
-        A,
-        k,
-    )
-
-    m, n = A.shape
-
-    rng = np.random.default_rng(
-        random_state
-    )
-
-    if verbose:
-        print("=" * 60)
-        print("ADAPTIVE RANDOMIZED PIVOTING (ARP)")
-        print("=" * 60)
-        print(f"Matrix shape : {A.shape}")
-        print(f"Target rank  : {k}")
-        print(f"Random seed  : {random_state}")
-        print()
-
-    # ---------------------------------------------------------
-    # Step 1:
-    #
-    # Compute dominant right singular subspace.
-    # ---------------------------------------------------------
-    V = _orthonormal_row_space(
-        A,
-        k,
-    )
-
-    if verbose:
-        print("[1] Dominant right singular subspace")
-        print(f"    V shape = {V.shape}")
-        print()
-
-    # Working copy of V.
-    V_work = V.copy()
-
-    selected: list[int] = []
-
-    probability_history: list[Array] = []
-
-    # ---------------------------------------------------------
-    # Step 2:
-    # Adaptive randomized selection.
-    # ---------------------------------------------------------
-    for step in range(k):
-
-        remaining_rank = V_work.shape[1]
-
-        if remaining_rank == 0:
-            break
-
-        # -----------------------------------------------------
-        # Compute leverage-score probabilities.
-        #
-        # p_j =
-        #       ||V_work[j,:]||²
-        #       ----------------
-        #       remaining_rank
-        #
-        # Because the columns of V_work are orthonormal,
-        # sum_j ||V_work[j,:]||² = remaining_rank.
-        # Therefore the probabilities sum to 1.
-        # -----------------------------------------------------
-        row_norm_sq = np.sum(
-            V_work * V_work,
-            axis=1,
-        )
-
-        probabilities = (
-            row_norm_sq
-            / remaining_rank
-        )
-
-        # Already selected columns must have probability zero.
-        probabilities[selected] = 0.0
-
-        probability_sum = probabilities.sum()
-
-        if probability_sum <= np.finfo(float).eps:
-            raise RuntimeError(
-                "No valid sampling probability remains."
+    if V is None:
+        _, _, Vt = np.linalg.svd(A, full_matrices=False)
+        V_basis = Vt[:k, :].T
+    else:
+        V_basis = _as_orthonormal_basis(V)
+        if V_basis.shape != (A.shape[1], k):
+            raise ValueError(
+                f"V must have shape {(A.shape[1], k)}; got {V_basis.shape}."
             )
 
-        # Normalize to eliminate tiny floating-point errors.
-        probabilities /= probability_sum
-
-        probability_history.append(
-            probabilities.copy()
-        )
-
-        # -----------------------------------------------------
-        # Random selection.
-        # -----------------------------------------------------
-        j = int(
-            rng.choice(
-                n,
-                p=probabilities,
-            )
-        )
-
-        selected.append(j)
-
-        if verbose:
-            print(f"[Step {step + 1}/{k}]")
-            print(
-                f"    Remaining rank : "
-                f"{remaining_rank}"
-            )
-            print(
-                f"    Selected column: "
-                f"{j}"
-            )
-            print(
-                f"    Probability    : "
-                f"{probabilities[j]:.6e}"
-            )
-            print(
-                f"    Max probability: "
-                f"{probabilities.max():.6e}"
-            )
-
-            # For a small matrix show all probabilities.
-            if n <= 20:
-                print(
-                    "    Probabilities:"
-                )
-                for idx, p in enumerate(
-                    probabilities
-                ):
-                    print(
-                        f"        column {idx}: "
-                        f"{p:.6f}"
-                    )
-
-            print()
-
-        # -----------------------------------------------------
-        # Update V_work.
-        #
-        # The selected row is projected out. This is the key
-        # adaptive step: probabilities in the next iteration
-        # are therefore different from the current ones.
-        # -----------------------------------------------------
-        if step < k - 1:
-            V_work = _project_out_selected_row(
-                V_work,
-                j,
-            )
-
-    # ---------------------------------------------------------
-    # Final selected matrix.
-    # ---------------------------------------------------------
-    C = A[:, selected]
-
-    VJ = V[selected, :]
-
-    if np.linalg.matrix_rank(VJ) < k:
-        raise RuntimeError(
-            "ARP selected a numerically rank-deficient "
-            "subset. Try another random seed."
-        )
-
-    # ---------------------------------------------------------
-    # Construct CSSP approximation.
-    # ---------------------------------------------------------
-    A_hat = _compute_approximation(
-        A,
-        V,
-        selected,
+    indices, probabilities = arp_select(
+        V_basis,
+        random_state=random_state,
+        verbose=verbose,
+        return_probabilities=True,
     )
-
-    fro_error = np.linalg.norm(
-        A - A_hat,
-        ord="fro",
-    )
-
-    relative_error = (
-        fro_error
-        / np.linalg.norm(
-            A,
-            ord="fro",
-        )
-    )
-
-    if verbose:
-        print("=" * 60)
-        print("FINAL RESULT")
-        print("=" * 60)
-        print(
-            f"Selected indices       : "
-            f"{selected}"
-        )
-        print(
-            f"Selected matrix shape  : "
-            f"{C.shape}"
-        )
-        print(
-            f"Approximation shape    : "
-            f"{A_hat.shape}"
-        )
-        print(
-            f"Frobenius error        : "
-            f"{fro_error:.6e}"
-        )
-        print(
-            f"Relative Frobenius err : "
-            f"{relative_error:.6e}"
-        )
-        print("=" * 60)
+    C = A[:, indices]
+    coefficients = np.linalg.solve(V_basis[indices, :].T, V_basis.T)
+    approximation = C @ coefficients
+    error = float(np.linalg.norm(A - approximation, ord="fro"))
+    norm_A = float(np.linalg.norm(A, ord="fro"))
 
     return {
-        "indices": np.asarray(
-            selected,
-            dtype=int,
-        ),
+        "indices": indices,
         "C": C,
-        "V": V,
-        "probabilities": probability_history,
-        "approximation": A_hat,
-        "error": fro_error,
-        "relative_error": relative_error,
+        "V": V_basis,
+        "probabilities": probabilities,
+        "approximation": approximation,
+        "error": error,
+        "relative_error": error / norm_A if norm_A else 0.0,
     }
 
 
-if __name__ == "__main__":
-    # Small reproducible sanity test.
-    rng = np.random.default_rng(42)
-
-    A = rng.normal(
-        size=(8, 10)
-    )
-
-    k = 3
-
-    result = arp_cssp(
-        A,
-        k,
-        random_state=42,
-        verbose=True,
-    )
+__all__ = ["arp_select", "arp_cssp"]
