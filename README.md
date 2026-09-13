@@ -66,6 +66,13 @@ Example with custom parameters:
 .\.venv\Scripts\python.exe experiments\run_experiment.py --m 500 --n 300 --k 20 --p 10 --q 1 --seed 42
 ```
 
+Run the extended comparison, which adds deterministic-SVD + Rejection ARP
+and randomized-SVD + Rejection ARP, with:
+
+```powershell
+.\.venv\Scripts\python.exe experiments\run_experiment.py --pipelines 6
+```
+
 The script reports relative Frobenius reconstruction error, error relative
 to the optimal rank-`k` truncated SVD, row-space time, selector time, and
 selected zero-based column indices.
@@ -92,6 +99,40 @@ for name, result in results.items():
 One combination can be run with `run_cssp_pipeline`, or through the named
 functions `deterministic_svd_osinsky`, `deterministic_svd_arp`,
 `randomized_svd_osinsky`, and `randomized_svd_arp`.
+
+The original `run_four_pipelines` API is unchanged. To include the two fast
+Rejection ARP variants, use:
+
+```python
+from cssp import run_six_pipelines
+
+results = run_six_pipelines(
+    A,
+    k=10,
+    random_state=42,
+    oversampling=10,
+    power_iterations=1,
+)
+```
+
+The additional result names are `deterministic_rejection_arp` and
+`randomized_rejection_arp`. Their `selection_details` include leverage scores,
+number of proposals, number accepted per block, and observed acceptance rate.
+Rejection ARP samples the same volume-sampling distribution as sequential ARP;
+its purpose is to reduce selection work for large candidate sets.
+
+The Meszaros/large experiment also keeps four pipelines as its default and can
+opt into all six with:
+
+```powershell
+.\.venv\Scripts\python.exe experiments\run_large_experiment.py --pipelines 6
+```
+
+Run all six pipelines on the GSE10072 DNA/gene-expression data with:
+
+```powershell
+.\.venv\Scripts\python.exe experiments\run_dna_experiment.py --pipelines 6
+```
 
 Each result contains both reconstructions:
 

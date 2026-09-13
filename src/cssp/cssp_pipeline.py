@@ -1,6 +1,10 @@
-"""End-to-end pipelines for the 2 x 2 CSSP experiment.
+"""End-to-end pipelines for the CSSP experiments.
 
-The four supported combinations are:
+The original four combinations remain available through
+``run_four_pipelines``. ``run_six_pipelines`` adds Rejection ARP to each
+row-space method without changing the original configurations.
+
+The original combinations are:
 
 1. deterministic truncated SVD + deterministic Osinsky selection;
 2. deterministic truncated SVD + randomized ARP selection;
@@ -20,6 +24,7 @@ from cssp.basis.deterministic_svd import deterministic_svd
 from cssp.basis.randomized_svd import randomized_svd
 from cssp.column_selection.arp import arp_select
 from cssp.column_selection.osinsky import osinsky_select
+from cssp.column_selection.rejection_arp import rejection_arp_select
 from cssp.metrics.evaluation import evaluate_approximation, optimal_rank_k_error
 from cssp.reconstruction.cssp_approximation import (
     oblique_cssp_approximation,
@@ -35,6 +40,12 @@ PIPELINE_CONFIGS: dict[str, tuple[str, str]] = {
     "deterministic_arp": ("deterministic", "arp"),
     "randomized_osinsky": ("randomized", "osinsky"),
     "randomized_arp": ("randomized", "arp"),
+}
+
+SIX_PIPELINE_CONFIGS: dict[str, tuple[str, str]] = {
+    **PIPELINE_CONFIGS,
+    "deterministic_rejection_arp": ("deterministic", "rejection_arp"),
+    "randomized_rejection_arp": ("randomized", "rejection_arp"),
 }
 
 
@@ -64,7 +75,17 @@ def _normalize_selector(method: str) -> str:
         return "osinsky"
     if method in {"arp", "randomized"}:
         return "arp"
-    raise ValueError("column_selection_method must be 'osinsky' or 'arp'.")
+    if method in {
+        "rejection_arp",
+        "rejection",
+        "rejection_rpqr",
+        "fast_arp",
+    }:
+        return "rejection_arp"
+    raise ValueError(
+        "column_selection_method must be 'osinsky', 'arp', or "
+        "'rejection_arp'."
+    )
 
 
 def _compute_row_space(
@@ -117,6 +138,14 @@ def _run_with_basis(
             return_probabilities=True,
         )
         selection_details = {"probability_history": history}
+    elif column_selection_method == "rejection_arp":
+        indices, diagnostics = rejection_arp_select(
+            V,
+            random_state=random_state,
+            verbose=verbose,
+            return_diagnostics=True,
+        )
+        selection_details = diagnostics
     else:
         indices, history = osinsky_select(
             A,
@@ -262,9 +291,10 @@ def run_cssp_pipeline(
     )
 
 
-def run_four_pipelines(
+def _run_configured_pipelines(
     A: Array,
     k: int,
+    pipeline_configs: dict[str, tuple[str, str]],
     *,
     random_state: int | None = 0,
     oversampling: int = 10,
@@ -272,10 +302,10 @@ def run_four_pipelines(
     reconstruction: str = "orthogonal",
     verbose: bool = False,
 ) -> dict[str, dict[str, Any]]:
-    """Run all four pipelines while sharing each computed row-space basis.
+    """Run configured pipelines while sharing each computed row-space basis.
 
-    Sharing the bases ensures Osinsky and ARP see exactly the same ``V`` in
-    their corresponding comparison. It also avoids computing each SVD twice.
+    Sharing the bases ensures every selector sees exactly the same ``V`` for
+    its row-space method. It also avoids recomputing either SVD.
     """
     A = _validate_matrix_rank(A, k)
 
@@ -295,7 +325,7 @@ def run_four_pipelines(
     }
 
     results: dict[str, dict[str, Any]] = {}
-    for name, (row_method, selector) in PIPELINE_CONFIGS.items():
+    for name, (row_method, selector) in pipeline_configs.items():
         U, singular_values, Vt, basis_seconds = basis_data[row_method]
         results[name] = _run_with_basis(
             A,
@@ -314,6 +344,52 @@ def run_four_pipelines(
             verbose,
         )
     return results
+
+
+def run_four_pipelines(
+    A: Array,
+    k: int,
+    *,
+    random_state: int | None = 0,
+    oversampling: int = 10,
+    power_iterations: int = 0,
+    reconstruction: str = "orthogonal",
+    verbose: bool = False,
+) -> dict[str, dict[str, Any]]:
+    """Run the original four pipelines with their existing names and behavior."""
+    return _run_configured_pipelines(
+        A,
+        k,
+        PIPELINE_CONFIGS,
+        random_state=random_state,
+        oversampling=oversampling,
+        power_iterations=power_iterations,
+        reconstruction=reconstruction,
+        verbose=verbose,
+    )
+
+
+def run_six_pipelines(
+    A: Array,
+    k: int,
+    *,
+    random_state: int | None = 0,
+    oversampling: int = 10,
+    power_iterations: int = 0,
+    reconstruction: str = "orthogonal",
+    verbose: bool = False,
+) -> dict[str, dict[str, Any]]:
+    """Run the original four pipelines plus two Rejection ARP pipelines."""
+    return _run_configured_pipelines(
+        A,
+        k,
+        SIX_PIPELINE_CONFIGS,
+        random_state=random_state,
+        oversampling=oversampling,
+        power_iterations=power_iterations,
+        reconstruction=reconstruction,
+        verbose=verbose,
+    )
 
 
 def deterministic_svd_osinsky(A: Array, k: int, **kwargs: Any) -> dict[str, Any]:
@@ -336,12 +412,30 @@ def randomized_svd_arp(A: Array, k: int, **kwargs: Any) -> dict[str, Any]:
     return run_cssp_pipeline(A, k, "randomized", "arp", **kwargs)
 
 
+def deterministic_svd_rejection_arp(
+    A: Array, k: int, **kwargs: Any
+) -> dict[str, Any]:
+    """Pipeline 5: deterministic truncated SVD + Rejection ARP."""
+    return run_cssp_pipeline(A, k, "deterministic", "rejection_arp", **kwargs)
+
+
+def randomized_svd_rejection_arp(
+    A: Array, k: int, **kwargs: Any
+) -> dict[str, Any]:
+    """Pipeline 6: randomized SVD + Rejection ARP."""
+    return run_cssp_pipeline(A, k, "randomized", "rejection_arp", **kwargs)
+
+
 __all__ = [
     "PIPELINE_CONFIGS",
+    "SIX_PIPELINE_CONFIGS",
     "run_cssp_pipeline",
     "run_four_pipelines",
+    "run_six_pipelines",
     "deterministic_svd_osinsky",
     "deterministic_svd_arp",
     "randomized_svd_osinsky",
     "randomized_svd_arp",
+    "deterministic_svd_rejection_arp",
+    "randomized_svd_rejection_arp",
 ]

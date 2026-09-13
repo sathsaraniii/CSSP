@@ -1,8 +1,9 @@
-"""Run and display the four CSSP pipelines on a reproducible matrix.
+"""Run and display the CSSP pipelines on a reproducible matrix.
 
 Usage from the repository root:
 
     python experiments/run_experiment.py
+    python experiments/run_experiment.py --pipelines 6
     python experiments/run_experiment.py --m 500 --n 300 --k 20 --q 1
 """
 
@@ -21,7 +22,7 @@ SRC_ROOT = PROJECT_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from cssp.cssp_pipeline import run_four_pipelines  # noqa: E402
+from cssp.cssp_pipeline import run_four_pipelines, run_six_pipelines  # noqa: E402
 
 
 def make_test_matrix(
@@ -77,6 +78,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--p", type=int, default=10, help="RSVD oversampling")
     parser.add_argument("--q", type=int, default=1, help="RSVD power iterations")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--pipelines",
+        type=int,
+        choices=(4, 6),
+        default=4,
+        help="run the original four pipelines or include two Rejection ARP pipelines",
+    )
     return parser.parse_args()
 
 
@@ -85,7 +93,8 @@ def main() -> None:
     A = make_test_matrix(
         args.m, args.n, args.numerical_rank, args.noise, args.seed
     )
-    results = run_four_pipelines(
+    run_pipelines = run_six_pipelines if args.pipelines == 6 else run_four_pipelines
+    results = run_pipelines(
         A,
         args.k,
         random_state=args.seed,

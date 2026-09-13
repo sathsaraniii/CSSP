@@ -1,17 +1,16 @@
-"""Run the four CSSP pipelines on the GSE10072 dataset."""
+"""Run four or six CSSP pipelines on the GSE10072 dataset."""
 
+import argparse
 from pathlib import Path
 
 import numpy as np
 
-from cssp import run_four_pipelines
+from cssp import run_four_pipelines, run_six_pipelines
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATASET_PATH = (
     PROJECT_ROOT
-    / "ARP"
-    / "ARP"
     / "data"
     / "DNA_matrix.txt"
 )
@@ -51,7 +50,20 @@ def load_gse10072(path: Path) -> tuple[np.ndarray, list[str]]:
     return A, sample_ids
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--pipelines",
+        type=int,
+        choices=(4, 6),
+        default=4,
+        help="run the original four pipelines or include two Rejection ARP pipelines",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
     A, sample_ids = load_gse10072(DATASET_PATH)
 
     print(f"Dataset: GSE10072")
@@ -60,7 +72,8 @@ def main() -> None:
     print(f"Number of tissue samples: {len(sample_ids)}")
     print()
 
-    results = run_four_pipelines(
+    run_pipelines = run_six_pipelines if args.pipelines == 6 else run_four_pipelines
+    results = run_pipelines(
         A,
         k=10,
         random_state=42,

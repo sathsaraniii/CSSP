@@ -1,18 +1,17 @@
 """Run the four CSSP pipelines on a subset of Meszaros/large."""
 
+import argparse
 from pathlib import Path
 
 import numpy as np
 from scipy.io import loadmat
 
-from cssp import run_four_pipelines
+from cssp import run_four_pipelines, run_six_pipelines
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATASET_PATH = (
     PROJECT_ROOT
-    / "ARP"
-    / "ARP"
     / "data"
     / "large.mat"
 )
@@ -85,7 +84,20 @@ def make_reproducible_submatrix(
     return A_dense, original_column_indices
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--pipelines",
+        type=int,
+        choices=(4, 6),
+        default=4,
+        help="run the original four pipelines or include two Rejection ARP pipelines",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
     A_sparse = load_large_matrix()
 
     print("Original Meszaros/large matrix")
@@ -106,7 +118,8 @@ def main() -> None:
 
     k = 20
 
-    results = run_four_pipelines(
+    run_pipelines = run_six_pipelines if args.pipelines == 6 else run_four_pipelines
+    results = run_pipelines(
         A,
         k=k,
         random_state=42,
