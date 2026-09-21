@@ -350,6 +350,60 @@ spectra. Zero-baseline ratios remain undefined (`NaN`). Use `--no-plots` for
 CSV-only output or `--families` for a subset. Existing runs are never overwritten;
 raw measurements are flushed incrementally and failed runs are marked incomplete.
 
+## E6: matched dense versus sparse storage
+
+`experiments/run_sparsity.py` compares four combinations: dense/CSR input ×
+sequential ARP/Rejection ARP. Each uses the same SparseStack basis and factorized
+oblique column approximation as the E4 rejection benchmark. This is **not** the
+six exact/randomized-SVD pipelines or orthogonal reconstruction.
+
+```bash
+python -m pip install -e ".[datasets,experiments]"
+
+# Four densities and all four combinations, small pilot
+python experiments/run_sparsity.py --size 100 --k 5 --instances 1 --trials 2 --run-name sparsity_pilot
+
+# 500 x 500, k=10, three matrices per density, ten trials
+python experiments/run_sparsity.py --run-name sparsity_full
+```
+
+Default densities are 1, .5, .1, .01. One Gaussian source and one position
+permutation per instance yield nested masks with `round(density*size^2)` retained
+entries; matrices are normalized to unit Frobenius norm. Dense and CSR formats
+contain exactly the same values. Zero rows/columns are retained and counted.
+Masking changes the spectrum as well as sparsity, so each matrix has its own
+untimed SVD baseline. A rank-deficient sketch stops the run rather than silently
+resampling the input or sketch.
+
+Each method independently constructs its basis and interpolation factors,
+using identical algorithm seeds for the paired dense/CSR runs. One warm-up per
+combination/matrix is excluded; execution order is shuffled and BLAS threading
+is verified. Only basis, selection and factor construction are timed. Data
+generation, format conversion, baseline SVD and blockwise error evaluation
+occur outside those intervals. Full `C @ X` reconstruction is not part of
+algorithm time; evaluation forms temporary column blocks after timing.
+
+Outputs under `results/e6/<run-name>/` are `config.json`, `raw_results.csv`,
+`instance_summary.csv`, `summary.csv`, `paired_results.csv`, and four plots
+(relative error, SVD ratio, runtime, input buffer bytes). Configuration records
+matrix hashes, density, nonzero counts, zero rows/columns and library versions.
+Pair records show dense/CSR index agreement, error differences and timing ratios;
+finite-precision arithmetic can occasionally change random pivot decisions.
+
+Reported storage is **numeric buffer bytes**, not peak RAM: dense `nbytes` versus
+CSR `data + indices + indptr`. Factor bytes include selected columns and dense
+coefficients; the sketch basis and other workspaces are not included in factor
+storage. Both representations coexist in this matched experiment, so process
+memory must not be interpreted as the cost of either representation alone.
+CSR may use more input storage than dense at high density. Sparse-aware does
+not mean every intermediate is sparse: the narrow basis and coefficients are dense.
+
+Instance summaries show trial variation. Overall summaries equally weight
+matrix-instance accuracy/storage means or runtime medians; plot bars are
+between-instance SD, not confidence intervals. Three matrices with ten trials
+are not thirty independent matrix instances. Use `--no-plots` for CSV-only
+output. Existing folders are protected and partial results are retained.
+
 ## Python API
 
 After the editable installation above, run all six pipelines with:
