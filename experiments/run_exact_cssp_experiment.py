@@ -10,6 +10,7 @@ Run from the repository root:
     python experiments/run_exact_cssp_experiment.py
     python experiments/run_exact_cssp_experiment.py --trials 100 --data-seed 42
 
+By default, results are saved to results/e1/e1_exact_cssp.csv.
 CSV output includes every enumerated subset and every selector run. Existing
 output files are not overwritten; choose another --output path for another run.
 """
@@ -48,7 +49,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-subsets", type=int, default=100_000,
                         help="safety limit for the exhaustive search")
     parser.add_argument("--output", type=Path,
-                        default=PROJECT_ROOT / "results" / "e1_exact_cssp.csv")
+                        default=PROJECT_ROOT / "results" / "e1" / "e1_exact_cssp.csv")
     args = parser.parse_args()
     if not 1 <= args.k <= min(args.m, args.n):
         parser.error("require 1 <= k <= min(m, n)")
