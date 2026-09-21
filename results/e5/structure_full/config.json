@@ -1,0 +1,228 @@
+{
+  "size": 500,
+  "k": 10,
+  "signal_rank": 25,
+  "instances": 3,
+  "trials": 10,
+  "repeats": 10,
+  "p": 10,
+  "q": 1,
+  "data_seed": 42,
+  "trial_seed": 0,
+  "families": [
+    "gaussian",
+    "exact_low_rank",
+    "small_noise",
+    "large_noise",
+    "rapid_decay",
+    "slow_decay"
+  ],
+  "no_plots": false,
+  "run_name": "structure_full",
+  "experiment": "E5",
+  "status": "complete",
+  "numpy_version": "2.5.2",
+  "python_version": "3.14.6",
+  "platform": "macOS-26.6-arm64-arm-64bit-Mach-O",
+  "blas": {
+    "Compilers": {
+      "c": {
+        "name": "clang",
+        "linker": "ld64",
+        "version": "15.0.0",
+        "commands": "cc"
+      },
+      "cython": {
+        "name": "cython",
+        "linker": "cython",
+        "version": "3.2.9",
+        "commands": "cython"
+      },
+      "c++": {
+        "name": "clang",
+        "linker": "ld64",
+        "version": "15.0.0",
+        "commands": "c++"
+      }
+    },
+    "Machine Information": {
+      "host": {
+        "cpu": "aarch64",
+        "family": "aarch64",
+        "endian": "little",
+        "system": "darwin"
+      },
+      "build": {
+        "cpu": "aarch64",
+        "family": "aarch64",
+        "endian": "little",
+        "system": "darwin"
+      }
+    },
+    "Build Dependencies": {
+      "blas": {
+        "name": "accelerate",
+        "found": true,
+        "version": "unknown",
+        "detection method": "system",
+        "include directory": "unknown",
+        "lib directory": "unknown",
+        "openblas configuration": "unknown",
+        "pc file directory": "unknown"
+      },
+      "lapack": {
+        "name": "accelerate",
+        "found": true,
+        "version": "unknown",
+        "detection method": "system",
+        "include directory": "unknown",
+        "lib directory": "unknown",
+        "openblas configuration": "unknown",
+        "pc file directory": "unknown"
+      }
+    },
+    "Python Information": {
+      "path": "/private/var/folders/g3/pffjr_y96bq06blnkf72x_hw0000gn/T/build-env-dg3jp86d/bin/python",
+      "version": "3.14"
+    },
+    "SIMD Extensions": {
+      "baseline": [
+        "NEON",
+        "NEON_FP16",
+        "NEON_VFPV4",
+        "ASIMD"
+      ],
+      "found": [
+        "ASIMDHP",
+        "ASIMDDP"
+      ],
+      "not found": [
+        "ASIMDFHM"
+      ]
+    }
+  },
+  "thread_control": [
+    {
+      "user_api": "blas",
+      "internal_api": "accelerate",
+      "num_threads": 1,
+      "verification": "BLASGetThreading",
+      "scope": "calling thread"
+    }
+  ],
+  "matrices": [
+    {
+      "family": "gaussian",
+      "instance": 0,
+      "sha256": "874eef677847bb84a399707c76319b63141157619327aa732399d0da9646a624",
+      "svd_optimal_error": 0.9620935478095414
+    },
+    {
+      "family": "exact_low_rank",
+      "instance": 0,
+      "sha256": "b1120955bc9e9aeda8893020feca82d82209c476fe44d51e3086ef4e9e8ad3f5",
+      "svd_optimal_error": 0.2838779885797852
+    },
+    {
+      "family": "small_noise",
+      "instance": 0,
+      "sha256": "1b9ed53bf719c8e2f8d9fbd97008a01ea020ff923125118d2b228f9c3d5553ce",
+      "svd_optimal_error": 0.2840096467632157
+    },
+    {
+      "family": "large_noise",
+      "instance": 0,
+      "sha256": "1f7b15ebb60e8fa74417afb60d8acddd5da9571ebc8602c32fd885bd50348e6e",
+      "svd_optimal_error": 0.5060529007069934
+    },
+    {
+      "family": "rapid_decay",
+      "instance": 0,
+      "sha256": "350bf07779ac9106526d64bf759f8049b8fca88858f83a294bd28eaaa1249702",
+      "svd_optimal_error": 0.691320377967813
+    },
+    {
+      "family": "slow_decay",
+      "instance": 0,
+      "sha256": "1e1f8de44c683ff2bb0e360012acb2017af49e38fc11a5d9f68d612b082592b8",
+      "svd_optimal_error": 0.2381353307927162
+    },
+    {
+      "family": "gaussian",
+      "instance": 1,
+      "sha256": "18a93b92987141cf508dba1584ec53985aa4e5b4e700a5fe1c55563ddaf1c46b",
+      "svd_optimal_error": 0.9619520286510503
+    },
+    {
+      "family": "exact_low_rank",
+      "instance": 1,
+      "sha256": "33c75aff0829a70ebc3d7c7633227815986dabf945a87f67dd19c7cd1b98e680",
+      "svd_optimal_error": 0.28387798857978525
+    },
+    {
+      "family": "small_noise",
+      "instance": 1,
+      "sha256": "11b2e52058a2d42b79148e878dde812e54a66b6ec899c0584725b112ef639ed7",
+      "svd_optimal_error": 0.2840046841002805
+    },
+    {
+      "family": "large_noise",
+      "instance": 1,
+      "sha256": "0d01490b1ce99e1e1b343c1f13d21826fceecd22d267f99720e9abb9c594d3eb",
+      "svd_optimal_error": 0.5048030580371589
+    },
+    {
+      "family": "rapid_decay",
+      "instance": 1,
+      "sha256": "97b7a1ce2a6e0fdd47bb065a018b3905d898b4434154677cb1df93459cc97961",
+      "svd_optimal_error": 0.6913203779678131
+    },
+    {
+      "family": "slow_decay",
+      "instance": 1,
+      "sha256": "4a2b136dfa67b8586883840013a3bd41e080b87114b7e146f91d5ede173321e7",
+      "svd_optimal_error": 0.23813533079271615
+    },
+    {
+      "family": "gaussian",
+      "instance": 2,
+      "sha256": "9ced243d280a69b81703d8dfcfc250f469374f3ee4f120d5c77af4cb307734fa",
+      "svd_optimal_error": 0.9625963758534559
+    },
+    {
+      "family": "exact_low_rank",
+      "instance": 2,
+      "sha256": "487987c899925b3ebab0d658e0d59faf31dc3e3ea91d198add79a6f50fb56cab",
+      "svd_optimal_error": 0.28387798857978525
+    },
+    {
+      "family": "small_noise",
+      "instance": 2,
+      "sha256": "1b9331a1e6a7b6c22dbaf91ff51d9ab6807a12e90bd252296687f9d0aa9d53d4",
+      "svd_optimal_error": 0.2840483726443041
+    },
+    {
+      "family": "large_noise",
+      "instance": 2,
+      "sha256": "5f8baf609d90deb4ec7d2ffe031da8e1ee4a40a436b682748942722f9dbc595b",
+      "svd_optimal_error": 0.5065165856750219
+    },
+    {
+      "family": "rapid_decay",
+      "instance": 2,
+      "sha256": "5094c68c4a9abe63026d1fccf6bb802c954ec0365c93b00c5b66dea39bb1f309",
+      "svd_optimal_error": 0.691320377967813
+    },
+    {
+      "family": "slow_decay",
+      "instance": 2,
+      "sha256": "8129939189e7fe58fcb85ee3b72bd996d102078393bf088dee159dd478d46767",
+      "svd_optimal_error": 0.23813533079271607
+    }
+  ],
+  "normalization": "Every matrix has Frobenius norm 1",
+  "spectra": "Signal: geomspace(20,1,signal_rank); rapid: geomspace(1,1e-8,size); slow: 1/i",
+  "noise": "1% or 50% of signal Frobenius norm before final normalization; shared direction",
+  "aggregation": "Within-matrix accuracy means or runtime medians, then equally weighted across instances",
+  "runtime": "standalone, one warm-up per method/matrix, orthogonal reconstruction including extraction; no error/baseline work"
+}

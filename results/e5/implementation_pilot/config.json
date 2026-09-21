@@ -1,0 +1,156 @@
+{
+  "size": 60,
+  "k": 5,
+  "signal_rank": 15,
+  "instances": 1,
+  "trials": 2,
+  "repeats": 2,
+  "p": 10,
+  "q": 1,
+  "data_seed": 42,
+  "trial_seed": 0,
+  "families": [
+    "gaussian",
+    "exact_low_rank",
+    "small_noise",
+    "large_noise",
+    "rapid_decay",
+    "slow_decay"
+  ],
+  "no_plots": false,
+  "run_name": "implementation_pilot",
+  "experiment": "E5",
+  "status": "complete",
+  "numpy_version": "2.5.2",
+  "python_version": "3.14.6",
+  "platform": "macOS-26.6-arm64-arm-64bit-Mach-O",
+  "blas": {
+    "Compilers": {
+      "c": {
+        "name": "clang",
+        "linker": "ld64",
+        "version": "15.0.0",
+        "commands": "cc"
+      },
+      "cython": {
+        "name": "cython",
+        "linker": "cython",
+        "version": "3.2.9",
+        "commands": "cython"
+      },
+      "c++": {
+        "name": "clang",
+        "linker": "ld64",
+        "version": "15.0.0",
+        "commands": "c++"
+      }
+    },
+    "Machine Information": {
+      "host": {
+        "cpu": "aarch64",
+        "family": "aarch64",
+        "endian": "little",
+        "system": "darwin"
+      },
+      "build": {
+        "cpu": "aarch64",
+        "family": "aarch64",
+        "endian": "little",
+        "system": "darwin"
+      }
+    },
+    "Build Dependencies": {
+      "blas": {
+        "name": "accelerate",
+        "found": true,
+        "version": "unknown",
+        "detection method": "system",
+        "include directory": "unknown",
+        "lib directory": "unknown",
+        "openblas configuration": "unknown",
+        "pc file directory": "unknown"
+      },
+      "lapack": {
+        "name": "accelerate",
+        "found": true,
+        "version": "unknown",
+        "detection method": "system",
+        "include directory": "unknown",
+        "lib directory": "unknown",
+        "openblas configuration": "unknown",
+        "pc file directory": "unknown"
+      }
+    },
+    "Python Information": {
+      "path": "/private/var/folders/g3/pffjr_y96bq06blnkf72x_hw0000gn/T/build-env-dg3jp86d/bin/python",
+      "version": "3.14"
+    },
+    "SIMD Extensions": {
+      "baseline": [
+        "NEON",
+        "NEON_FP16",
+        "NEON_VFPV4",
+        "ASIMD"
+      ],
+      "found": [
+        "ASIMDHP",
+        "ASIMDDP"
+      ],
+      "not found": [
+        "ASIMDFHM"
+      ]
+    }
+  },
+  "thread_control": [
+    {
+      "user_api": "blas",
+      "internal_api": "accelerate",
+      "num_threads": 1,
+      "verification": "BLASGetThreading",
+      "scope": "calling thread"
+    }
+  ],
+  "matrices": [
+    {
+      "family": "gaussian",
+      "instance": 0,
+      "sha256": "d09df0d4d34515a1f77d3d2797e07fe579f5f67aa2b5e4c730edcc756e9d4c6d",
+      "svd_optimal_error": 0.8405910279909038
+    },
+    {
+      "family": "exact_low_rank",
+      "instance": 0,
+      "sha256": "2b915e6b92100a51dc11996e444f78645a2d0b8a6d8bf42fa8b6e81cb0776db5",
+      "svd_optimal_error": 0.3409357312677421
+    },
+    {
+      "family": "small_noise",
+      "instance": 0,
+      "sha256": "ae255a12adc79b16b4961b68c6ab01ad6a249adb87385a6eebf0a34860731ae1",
+      "svd_optimal_error": 0.3406900392071306
+    },
+    {
+      "family": "large_noise",
+      "instance": 0,
+      "sha256": "01116372d4942d68e83f6fbef2cf3412b550dad141d947c483368714f59a8f58",
+      "svd_optimal_error": 0.5015493349824702
+    },
+    {
+      "family": "rapid_decay",
+      "instance": 0,
+      "sha256": "4001bf55335ee32d780f78dcb2f2e88397b7fb8f63b2021f0af0296339cf899b",
+      "svd_optimal_error": 0.2099103720108555
+    },
+    {
+      "family": "slow_decay",
+      "instance": 0,
+      "sha256": "d74b4475e5c1570bf98d9779beea836061ff34f5ed3199a9eb050da38133f132",
+      "svd_optimal_error": 0.3181192505098523
+    }
+  ],
+  "normalization": "Every matrix has Frobenius norm 1",
+  "spectra": "Signal: geomspace(20,1,signal_rank); rapid: geomspace(1,1e-8,size); slow: 1/i",
+  "noise": "1% or 50% of signal Frobenius norm before final normalization; shared direction",
+  "aggregation": "Within-matrix accuracy means or runtime medians, then equally weighted across instances",
+  "runtime": "standalone, one warm-up per method/matrix, orthogonal reconstruction including extraction; no error/baseline work"
+}

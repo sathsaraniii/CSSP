@@ -298,6 +298,58 @@ skipped; do not raise the limit without checking available system memory.
 Both full reference dimensions completed an initial three-repetition k=10 run
 in `results/e4/rejection/reference_k10/`. This is not the full paper rank sweep.
 
+## E5: matrix structure at fixed dimensions
+
+`experiments/run_matrix_structure.py` compares all six pipelines on six matrix
+families: Gaussian, exact low-rank, low-rank with 1% or 50% relative noise,
+rapid singular-value decay, and slow decay. Defaults are size 500×500, `k=10`,
+signal rank 25, three matrix instances per family, ten accuracy trials per
+randomized combination, and ten standalone timing repetitions per pipeline.
+Randomized SVD uses `p=10, q=1`.
+
+```bash
+python -m pip install -e ".[experiments]"
+
+# All six families, small workflow pilot
+python experiments/run_matrix_structure.py --size 60 --k 5 --signal-rank 15 --instances 1 --trials 2 --repeats 2 --run-name structure_pilot
+
+# Full planned study
+python experiments/run_matrix_structure.py --run-name structure_full
+```
+
+Every matrix is normalized to unit Frobenius norm. Within an instance, noise
+cases share the same signal and noise direction; their noise norms are 1%/50%
+of signal norm before final normalization. Spectral cases share orthogonal
+factors: rapid decay is `geomspace(1,1e-8,size)` and slow decay is `1/i`.
+The exact low-rank signal uses `geomspace(20,1,signal_rank)`; `k < signal-rank`
+is required to avoid a trivial exact reconstruction. Data/algorithm seeds are
+separate and recorded; a fixed seed reproduces the inputs on the same environment.
+
+Accuracy uses shared exact/randomized bases as in E2, with deterministic-SVD +
+Osinsky evaluated once per matrix. Runtime uses E4's standalone component timer
+and verified single-thread control: a fresh basis per method, only orthogonal
+reconstruction, one excluded warm-up, shuffled order, and no baseline/error
+evaluation inside timed intervals. Matrix-generation cost is excluded.
+
+Outputs under `results/e5/<run-name>/`:
+
+- `config.json`: parameters, matrix fingerprints, environment, and completion status.
+- `raw_results.csv`: separate `accuracy` and `runtime` rows; inapplicable fields
+  are blank, not zero measurements.
+- `instance_summary.csv`: within-matrix statistics for each method/metric.
+- `summary.csv`: equally weighted means of matrix-instance accuracy means or
+  runtime medians, plus between-instance sample standard deviation.
+- `spectra.csv` and `plots/`: measured singular values, relative error,
+  SVD-optimality ratios, and algorithm-runtime comparisons.
+
+Plot error bars describe **between-matrix-instance** variation, not variation
+across randomized trials or confidence intervals. They are omitted for a
+single-instance pilot; within-matrix variability remains in `instance_summary.csv`.
+Exact low-rank matrices can have tiny roundoff singular values in measured
+spectra. Zero-baseline ratios remain undefined (`NaN`). Use `--no-plots` for
+CSV-only output or `--families` for a subset. Existing runs are never overwritten;
+raw measurements are flushed incrementally and failed runs are marked incomplete.
+
 ## Python API
 
 After the editable installation above, run all six pipelines with:
