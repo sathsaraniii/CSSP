@@ -1,0 +1,154 @@
+{
+  "sizes": [
+    100,
+    250,
+    500,
+    1000
+  ],
+  "k": 10,
+  "signal_rank": 25,
+  "relative_noise": 0.02,
+  "p": 10,
+  "q": 1,
+  "repeats": 10,
+  "threads": 1,
+  "data_seed": 42,
+  "trial_seed": 0,
+  "run_name": "runtime_full",
+  "no_plots": false,
+  "experiment": "E4",
+  "status": "complete",
+  "warmups_per_pipeline_per_size": 1,
+  "numpy_version": "2.5.2",
+  "python_version": "3.14.6",
+  "platform": "macOS-26.6-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "processor": "arm",
+  "logical_cpu_count": 8,
+  "blas_configuration": {
+    "Compilers": {
+      "c": {
+        "name": "clang",
+        "linker": "ld64",
+        "version": "15.0.0",
+        "commands": "cc"
+      },
+      "cython": {
+        "name": "cython",
+        "linker": "cython",
+        "version": "3.2.9",
+        "commands": "cython"
+      },
+      "c++": {
+        "name": "clang",
+        "linker": "ld64",
+        "version": "15.0.0",
+        "commands": "c++"
+      }
+    },
+    "Machine Information": {
+      "host": {
+        "cpu": "aarch64",
+        "family": "aarch64",
+        "endian": "little",
+        "system": "darwin"
+      },
+      "build": {
+        "cpu": "aarch64",
+        "family": "aarch64",
+        "endian": "little",
+        "system": "darwin"
+      }
+    },
+    "Build Dependencies": {
+      "blas": {
+        "name": "accelerate",
+        "found": true,
+        "version": "unknown",
+        "detection method": "system",
+        "include directory": "unknown",
+        "lib directory": "unknown",
+        "openblas configuration": "unknown",
+        "pc file directory": "unknown"
+      },
+      "lapack": {
+        "name": "accelerate",
+        "found": true,
+        "version": "unknown",
+        "detection method": "system",
+        "include directory": "unknown",
+        "lib directory": "unknown",
+        "openblas configuration": "unknown",
+        "pc file directory": "unknown"
+      }
+    },
+    "Python Information": {
+      "path": "/private/var/folders/g3/pffjr_y96bq06blnkf72x_hw0000gn/T/build-env-dg3jp86d/bin/python",
+      "version": "3.14"
+    },
+    "SIMD Extensions": {
+      "baseline": [
+        "NEON",
+        "NEON_FP16",
+        "NEON_VFPV4",
+        "ASIMD"
+      ],
+      "found": [
+        "ASIMDHP",
+        "ASIMDDP"
+      ],
+      "not found": [
+        "ASIMDFHM"
+      ]
+    }
+  },
+  "threadpools_before": [],
+  "threadpools_limited": [
+    {
+      "user_api": "blas",
+      "internal_api": "accelerate",
+      "num_threads": 1,
+      "verification": "BLASGetThreading",
+      "scope": "calling thread"
+    }
+  ],
+  "data_seed_rule": "SeedSequence([data_seed, size])",
+  "datasets_metadata": {
+    "100": {
+      "shape": [
+        100,
+        100
+      ],
+      "sha256": "dac46cf9e0372153a6a401d4b002146e19ade660f72b75787a63b3c694b13876",
+      "matrix_bytes": 80000
+    },
+    "250": {
+      "shape": [
+        250,
+        250
+      ],
+      "sha256": "a74377dd8ec0a70587c037b936f3dfcdc3afc5a1c48a1b8d23f89eaf0ab51b47",
+      "matrix_bytes": 500000
+    },
+    "500": {
+      "shape": [
+        500,
+        500
+      ],
+      "sha256": "573026e1d584783ab76a820681373036410c2fcac4f1fa8c10bfc0dc0c56a635",
+      "matrix_bytes": 2000000
+    },
+    "1000": {
+      "shape": [
+        1000,
+        1000
+      ],
+      "sha256": "ae65601c7b8c9b87caa44ee0ebb87c2ba172baefa410415280bc32e8c764fe0c",
+      "matrix_bytes": 8000000
+    }
+  },
+  "noise_definition": "||noise||_F / ||signal||_F; signal singular values geomspace(20,1,rank)",
+  "timing_scope": "standalone basis + selection + orthogonal reconstruction, including helper validation",
+  "excluded": "data generation, warm-ups, sanity checks, baseline SVD, error metrics, oblique reconstruction, I/O",
+  "variability": "system variation plus seed-dependent algorithm work; no parallel pipeline runs"
+}
