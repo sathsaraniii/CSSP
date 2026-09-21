@@ -239,6 +239,65 @@ The 10,000-square dense and million-row sparse Rejection ARP reference examples
 are **not** part of this runner. This is a local dense scaling study, not a
 reproduction of the papers' performance results.
 
+## E4 rejection: large reference-family column-selection benchmark
+
+This is separate from the completed six-pipeline size sweep above. It compares
+the existing ARP and Rejection ARP selectors with a sparse-sign sketch basis and
+**factorized oblique reconstruction**, not the orthogonal reconstruction of E4's
+original runner. No original selectors or pipelines are changed.
+
+```bash
+python -m pip install -e ".[datasets,experiments]"
+
+# Small verification problem
+python experiments/run_rejection_benchmark.py --profile pilot --ks 4 10 --repeats 2 --run-name my_pilot
+
+# Both full reference dimensions, initially k=10
+python experiments/run_rejection_benchmark.py --profile reference --ks 10 --repeats 3 --run-name my_reference_k10
+
+# Optional subsequent rank sweep, subject to memory checks
+python experiments/run_rejection_benchmark.py --profile reference --ks 10 20 50 100 --repeats 10 --run-name my_rank_sweep
+```
+
+Profiles give **stored reference shapes**: `pilot` uses dense 200×200 and sparse
+2,000×200; `intermediate` uses dense 1,000×1,000 and sparse 100,000×1,000;
+`reference` uses dense 10,000×10,000 and sparse 1,000,000×10,000. The benchmark
+transposes these inputs and explicitly selects columns: the full sparse CSSP
+input is **10,000×1,000,000**. Neither the original sparse input nor the full
+reconstructed matrix is densified. See [dataset details](data/rejection_arp/README.md).
+
+Two measurements are kept separate:
+
+- `selection_only`: both selectors receive the same precomputed basis; basis
+  and interpolation times are zero placeholders and not measurements in this mode.
+- `end_to_end`: each method constructs its own identically seeded basis, selects
+  columns, and builds `C` and `X` for the approximation `C @ X`. It includes input
+  validation and the small sketch-rank check, but excludes input generation,
+  loading, full error evaluation, output writing, and plotting. This is the
+  timed factor-construction workflow, not total script wall time.
+
+One warm-up per method/mode/k is excluded. Methods run in shuffled order with
+recorded independent basis/selector seed streams and verified single-thread
+BLAS. SparseStack generation follows the pinned reference code; interpolation
+uses chunked LU solves instead of the author's selector-returned QR factors.
+Full-basis checks and the current Python sampling implementation remain included,
+so matching MATLAB speedups is not guaranteed. Sketch rank failures stop and
+mark a run incomplete rather than silently retrying or altering the data.
+
+Outputs are `results/e4/rejection/<run-name>/{config.json,raw_results.csv,summary.csv,plots/}`.
+Summaries/plots show median and 25th/75th percentiles for each method and mode.
+Use `--datasets dense` or `--datasets sparse` for one input; `--no-plots` omits
+figures. New run directories are required; raw rows are saved incrementally.
+Generated inputs are cached under `data/rejection_arp/generated/` with hashes.
+
+The default `--memory-gib 4` rejects cases whose conservative working-memory
+estimate exceeds 4 GiB **before generation**. It is not a measured peak or hard
+memory limit. Skips are recorded and the status becomes `complete_with_skips`.
+The full sparse input with k=100 exceeds that default estimate and will be
+skipped; do not raise the limit without checking available system memory.
+Both full reference dimensions completed an initial three-repetition k=10 run
+in `results/e4/rejection/reference_k10/`. This is not the full paper rank sweep.
+
 ## Python API
 
 After the editable installation above, run all six pipelines with:

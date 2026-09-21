@@ -1,0 +1,15 @@
+{
+  "kind": "sparse",
+  "shape": [
+    2000,
+    200
+  ],
+  "seed": 42,
+  "dtype": "float64",
+  "status": "complete",
+  "numpy_version": "2.5.2",
+  "reference_commit": "98bc376c247ab2ef133e1b51fac854983c7c3c8b",
+  "row_scaling": "1 / (zero_based_row + 1)^2",
+  "nonzeros_per_column": 30,
+  "sha256": "6a476573ff16b9873dbc7c393222d8b0a68fa8a4e366e63a33d3565d42800f26"
+}

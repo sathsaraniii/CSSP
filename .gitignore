@@ -8,3 +8,7 @@ dist/
 .coverage
 htmlcov/
 .DS_Store
+
+# Reproducible large reference inputs; retain their small provenance JSON files.
+data/rejection_arp/generated/*.npy
+data/rejection_arp/generated/*.npz

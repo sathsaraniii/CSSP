@@ -1,0 +1,15 @@
+{
+  "kind": "dense",
+  "shape": [
+    1000,
+    1000
+  ],
+  "seed": 42,
+  "dtype": "float64",
+  "status": "complete",
+  "numpy_version": "2.5.2",
+  "reference_commit": "98bc376c247ab2ef133e1b51fac854983c7c3c8b",
+  "row_scaling": "1 / (zero_based_row + 1)^2",
+  "nonzeros_per_column": null,
+  "sha256": "b0d3499cbf3e9a168f46b419a652523aea8cdb05ac7ea5ed0c4de62cd3c5717d"
+}

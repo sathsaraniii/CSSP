@@ -33,4 +33,6 @@ Reference definitions for the two synthetic runtime matrices from Epperly's
 
 See [rejection_arp/README.md](rejection_arp/README.md) for the paper, author code,
 generation formulas, storage requirements, and row/column orientation caveat.
-Only references are currently included; the matrix files are not yet generated.
+The benchmark script generates/reuses the inputs under `rejection_arp/generated/`
+and records provenance. Large binaries are ignored by Git. Both reference-size
+inputs were generated locally for the initial E4 rejection `k=10` run.

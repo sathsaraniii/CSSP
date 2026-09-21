@@ -1,0 +1,89 @@
+{
+  "profile": "pilot",
+  "datasets": [
+    "dense",
+    "sparse"
+  ],
+  "ks": [
+    4,
+    10
+  ],
+  "repeats": 2,
+  "data_seed": 42,
+  "trial_seed": 0,
+  "memory_gib": 4.0,
+  "no_plots": false,
+  "run_name": "column_pilot",
+  "experiment": "E4 rejection",
+  "status": "complete",
+  "reference_commit": "98bc376c247ab2ef133e1b51fac854983c7c3c8b",
+  "numpy_version": "2.5.2",
+  "scipy_version": "1.18.1",
+  "platform": "macOS-26.6-arm64-arm-64bit-Mach-O",
+  "orientation": "column selection on A = reference_matrix.T; stored files retain reference orientation",
+  "interpolation": "C=A[:,J], X=solve(V[J,:].T,V.T), Ahat=C@X; factorized oblique, not orthogonal",
+  "memory_note": "Planning estimate, not measured peak or allocator-enforced cap",
+  "basis": "V=orth(A.T@SparseStack), zeta=min(4,k), exactly k columns, no power iterations",
+  "limitations": "existing Python selectors and their full-basis validation; not identical MATLAB timings",
+  "warmups": 1,
+  "datasets_metadata": {
+    "dense": {
+      "kind": "dense",
+      "shape": [
+        200,
+        200
+      ],
+      "seed": 42,
+      "dtype": "float64",
+      "status": "complete",
+      "numpy_version": "2.5.2",
+      "reference_commit": "98bc376c247ab2ef133e1b51fac854983c7c3c8b",
+      "row_scaling": "1 / (zero_based_row + 1)^2",
+      "nonzeros_per_column": null,
+      "sha256": "620498bf0a1aee7b45ec4d57a0b509b47ba7823fb29dedd1042b1c46e6487b1c",
+      "path": "/Users/sathsaraniamarasinghe/CSSP/data/rejection_arp/generated/dense_200x200_seed42.npy",
+      "reference_shape": [
+        200,
+        200
+      ],
+      "cssp_shape": [
+        200,
+        200
+      ]
+    },
+    "sparse": {
+      "kind": "sparse",
+      "shape": [
+        2000,
+        200
+      ],
+      "seed": 42,
+      "dtype": "float64",
+      "status": "complete",
+      "numpy_version": "2.5.2",
+      "reference_commit": "98bc376c247ab2ef133e1b51fac854983c7c3c8b",
+      "row_scaling": "1 / (zero_based_row + 1)^2",
+      "nonzeros_per_column": 30,
+      "sha256": "6a476573ff16b9873dbc7c393222d8b0a68fa8a4e366e63a33d3565d42800f26",
+      "path": "/Users/sathsaraniamarasinghe/CSSP/data/rejection_arp/generated/sparse_2000x200_seed42.npz",
+      "reference_shape": [
+        2000,
+        200
+      ],
+      "cssp_shape": [
+        200,
+        2000
+      ]
+    }
+  },
+  "skipped": [],
+  "thread_control": [
+    {
+      "user_api": "blas",
+      "internal_api": "accelerate",
+      "num_threads": 1,
+      "verification": "BLASGetThreading",
+      "scope": "calling thread"
+    }
+  ]
+}
