@@ -404,6 +404,56 @@ between-instance SD, not confidence intervals. Three matrices with ten trials
 are not thirty independent matrix instances. Use `--no-plots` for CSV-only
 output. Existing folders are protected and partial results are retained.
 
+## E7: repeated real-data evaluation (existing scripts)
+
+The existing DNA and Meszaros runners now support repeated trials and saved
+results. No duplicate dataset runners are required; `_real_data_experiment.py`
+is a shared reporting helper. Both retain `--pipelines 4` as the default; use
+`--pipelines 6` to include Rejection ARP. The default is now **10 trials**, not a
+single run (`--trials 1` restores that scope). DNA defaults to `k=10`, Meszaros
+to `k=20`; `--k` chooses one value and `--ks` chooses a sweep.
+
+```bash
+# All six, ten trials on the full DNA matrix
+python experiments/run_dna_experiment.py --pipelines 6 --run-name dna_repeated
+
+# All six, ten trials on one fixed 400-column Meszaros subset
+python experiments/run_large_experiment.py --pipelines 6 --run-name meszaros_repeated
+
+# Optional multi-k comparison
+python experiments/run_dna_experiment.py --pipelines 6 --ks 5 10 20 --trials 10 --run-name dna_rank_sweep
+python experiments/run_large_experiment.py --pipelines 6 --ks 10 20 40 --trials 10 --columns 400 --data-seed 42 --run-name meszaros_rank_sweep
+```
+
+`--seed 42` starts the algorithm trial seeds (42,43,...); `--p 10 --q 1` are
+the randomized-SVD defaults. Meszaros `--data-seed` fixes its sampled columns
+independently of algorithm seeds, and the same subset is reused across every
+trial and k. It is still a dense subset experiment, not full sparse CSSP.
+
+Outputs go to `results/e7/dna/<run-name>/` or
+`results/e7/meszaros/<run-name>/`: configuration, incremental raw CSV, summary
+CSV, and two plots. `accuracy.png` shows mean relative error with sample SD and
+the SVD lower bound; `algorithm_time.png` shows median reported time with IQR.
+One-k runs use horizontal point/interval comparisons, while multi-k runs use
+curves. No redundant spectrum, distribution or selection diagrams are generated.
+Single-trial runs have undefined sample SD and no accuracy error bars.
+Plotting requires the `experiments` dependency group; `--no-plots` is supported.
+
+Raw rows preserve local/original column indices and DNA sample identifiers.
+`--show-indices` additionally prints them; the terminal otherwise prints progress
+and a compact final accuracy/timing summary. Configurations record the subset
+mapping, matrix hash, parameters and completion status. Existing folders are not
+overwritten; interrupted runs retain completed rows.
+
+These runners reuse the existing shared-basis pipeline API. Each trial seed is
+passed to both basis construction and selection; deterministic Osinsky repeats
+for timing, not as independent accuracy samples. Timings are **descriptive
+component sums**, not controlled standalone benchmarks: no warm-ups or thread
+limits are imposed here, shared basis cost is attributed to each method, and
+baseline/evaluation/unused reconstruction work is excluded from algorithm time.
+Use E4 for controlled timing claims. Means/SD here describe algorithm trials on
+one fixed dataset, not variation across independent datasets.
+
 ## Python API
 
 After the editable installation above, run all six pipelines with:

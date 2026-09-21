@@ -1,15 +1,19 @@
+# E7 — Repeated real-world CSSP evaluation with saved outputs.
 """Run four or six CSSP pipelines on the GSE10072 dataset.
     (DNA data, Shape: 22,283 x 107) """
 
 import argparse
 from pathlib import Path
+import sys
 
 import numpy as np
 
-from cssp import run_four_pipelines, run_six_pipelines
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _real_data_experiment import add_arguments, validate_arguments, run_real_data  # noqa: E402
 DATASET_PATH = (
     PROJECT_ROOT
     / "data"
@@ -68,66 +72,18 @@ def load_gse10072(path: Path) -> tuple[np.ndarray, list[str]]:
     return A, sample_ids
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--pipelines",
-        type=int,
-        choices=(4, 6),
-        default=4,
-        help="run the original four pipelines or include two Rejection ARP pipelines",
-    )
-    return parser.parse_args()
+    add_arguments(parser)
+    return validate_arguments(parser, parser.parse_args(argv), default_k=10)
 
 
 def main() -> None:
     args = parse_args()
     A, sample_ids = load_gse10072(DATASET_PATH)
-
-    print(f"Dataset: GSE10072")
-    print(f"Matrix shape: {A.shape}")
-    print(f"Finite values: {np.isfinite(A).all()}")
-    print(f"Number of tissue samples: {len(sample_ids)}")
-    print()
-
-    run_pipelines = run_six_pipelines if args.pipelines == 6 else run_four_pipelines
-    results = run_pipelines(
-        A,
-        k=10,
-        random_state=42,
-        oversampling=10,
-        power_iterations=1,
-    )
-
-    header = (
-        f"{'Pipeline':<27}"
-        f"{'Relative error':>18}"
-        f"{'Optimality':>15}"
-        f"{'Basis time':>15}"
-        f"{'Selection time':>18}"
-    )
-    print(header)
-    print("-" * len(header))
-
-    for name, result in results.items():
-        metrics = result["metrics"]
-        timings = result["timings"]
-
-        print(
-            f"{name:<27}"
-            f"{metrics['relative_frobenius_error']:>18.6e}"
-            f"{metrics['frobenius_optimality_ratio']:>15.6f}"
-            f"{timings['basis_seconds']:>15.6f}"
-            f"{timings['selection_seconds']:>18.6f}"
-        )
-
-        selected_samples = [
-            sample_ids[index]
-            for index in result["indices"]
-        ]
-
-        print(f"  Indices: {result['indices'].tolist()}")
-        print(f"  Samples: {selected_samples}")
+    print(f"GSE10072: {A.shape}, {len(sample_ids)} tissue samples")
+    run_real_data(A, args, "dna", DATASET_PATH, sample_ids=sample_ids,
+                  preprocessing="Full GEO numeric table; no normalization or subsampling")
 
 
 if __name__ == "__main__":
