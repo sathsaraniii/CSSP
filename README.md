@@ -454,6 +454,38 @@ baseline/evaluation/unused reconstruction work is excluded from algorithm time.
 Use E4 for controlled timing claims. Means/SD here describe algorithm trials on
 one fixed dataset, not variation across independent datasets.
 
+## E8: full-pipeline accuracy–runtime trade-off
+
+E8 synthesizes **existing E7 measurements**, without rerunning algorithms or
+loading matrices. Each plot compares the pipelines on **one source run and one
+target rank**. Different datasets, subsets, ranks and runs are never pooled.
+
+```bash
+python experiments/plot_pipeline_tradeoff.py \
+  --runs results/e7/dna/dna_full results/e7/meszaros/meszaros_full \
+  --run-name real_data_full
+```
+
+Outputs go to `results/e8/real_data_full/`: `summary.csv`, a `config.json` with
+source configurations and input-file hashes, and one accuracy-versus-runtime
+PNG per source/rank under `plots/`. The source E7 results remain unchanged.
+Existing output folders cannot be overwritten; choose a new run name to repeat.
+The script checks completion, matching trial sets, baseline consistency and
+the algorithm-time component sum before reporting. Four- and six-pipeline
+E7 runs are supported; plotting requires the `experiments` dependency group.
+
+Each point shows **median algorithm time (milliseconds)** versus **mean relative
+Frobenius error**, both calculated from the same trial rows. Lower and further
+left is better. Horizontal bars show timing IQR; vertical bars show sample SD
+of error (omitted for a single trial). The horizontal SVD line is an accuracy
+lower bound only, not a timed competitor. No lines connect the pipeline points.
+
+This is a descriptive trade-off analysis, not a new independent experiment or
+a significance test. E7 timings remain shared-basis component sums, excluding
+baseline/evaluation and the unused reconstruction; they are not standalone
+wall times. Overlapping errors, especially on Meszaros, are a valid result.
+E8 does not isolate the variability contributed by each randomized stage.
+
 ## Python API
 
 After the editable installation above, run all six pipelines with:
