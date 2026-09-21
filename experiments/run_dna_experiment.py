@@ -1,4 +1,5 @@
-"""Run four or six CSSP pipelines on the GSE10072 dataset."""
+"""Run four or six CSSP pipelines on the GSE10072 dataset.
+    (DNA data, Shape: 22,283 x 107) """
 
 import argparse
 from pathlib import Path

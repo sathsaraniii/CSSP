@@ -1,4 +1,5 @@
-"""Run the four CSSP pipelines on a subset of Meszaros/large."""
+"""Run four CSSP pipelines on a subset of Meszaros/large 
+(Linear-programming problem, Shape: 4,282 x 8,617, sparse matrix) """
 
 import argparse
 from pathlib import Path
