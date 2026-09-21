@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 from scipy.io import loadmat
+from scipy.sparse import csc_matrix, issparse
 
 from cssp import run_four_pipelines, run_six_pipelines
 
@@ -37,14 +38,35 @@ def make_reproducible_submatrix(
     random_state: int = 42,
 ):
     """Choose nonzero columns and remove rows empty in that subset."""
+    if (
+        isinstance(number_of_columns, (bool, np.bool_))
+        or not isinstance(number_of_columns, (int, np.integer))
+        or number_of_columns < 1
+    ):
+        raise ValueError("number_of_columns must be a positive integer.")
+    if not issparse(A_sparse) or A_sparse.ndim != 2:
+        raise ValueError("A_sparse must be a two-dimensional sparse matrix.")
+
+    # Canonicalize a copy so cancelling duplicate entries and explicit stored
+    # zeros do not count as nonzeros, without modifying the caller's matrix.
+    A_sparse = csc_matrix(A_sparse, copy=True)
+    if np.iscomplexobj(A_sparse) or not np.isfinite(A_sparse.data).all():
+        raise ValueError("A_sparse must contain finite real values.")
+    A_sparse.sum_duplicates()
+    A_sparse.eliminate_zeros()
+
     # Find columns containing at least one nonzero value.
+    # count_nonzero(axis=...) requires SciPy 1.15; this also supports the
+    # project's declared SciPy >= 1.10 dependency.
     nonzero_column_mask = np.asarray(
-        A_sparse.count_nonzero(axis=0)
+        (A_sparse != 0).getnnz(axis=0)
     ).ravel() > 0
 
     original_nonzero_columns = np.flatnonzero(
         nonzero_column_mask
     )
+    if original_nonzero_columns.size == 0:
+        raise ValueError("A_sparse must contain at least one nonzero column.")
 
     A_nonzero = A_sparse[:, nonzero_column_mask]
 
@@ -68,7 +90,7 @@ def make_reproducible_submatrix(
 
     # Remove rows that are completely zero in this particular subset.
     nonzero_row_mask = np.asarray(
-        A_subset.count_nonzero(axis=1)
+        (A_subset != 0).getnnz(axis=1)
     ).ravel() > 0
 
     A_subset = A_subset[nonzero_row_mask, :]

@@ -17,7 +17,7 @@ DATASET_PATH = (
 
 
 def load_gse10072(path: Path) -> tuple[np.ndarray, list[str]]:
-    """Load the numeric expression matrix and sample identifiers."""
+    """Load a finite, nonempty GEO matrix, stopping at its table-end marker."""
     with path.open("r", encoding="utf-8") as file:
         # Skip the GEO metadata before the matrix.
         for line in file:
@@ -27,25 +27,42 @@ def load_gse10072(path: Path) -> tuple[np.ndarray, list[str]]:
             raise ValueError("Matrix table was not found in the dataset.")
 
         # The next line contains ID_REF followed by sample identifiers.
-        header = next(file).rstrip().split("\t")
-        sample_ids = [
-            value.strip('"')
-            for value in header[1:]
-        ]
+        header_line = next(file, None)
+        if header_line is None:
+            raise ValueError("Matrix table header was not found in the dataset.")
+        header = [value.strip().strip('"') for value in header_line.split("\t")]
+        if len(header) < 2 or header[0] != "ID_REF" or not all(header[1:]):
+            raise ValueError("Matrix table header must contain ID_REF and sample identifiers.")
+        sample_ids = header[1:]
 
-        # Stop before the GEO table-end marker.
-        numeric_lines = (
-            line
-            for line in file
-            if not line.startswith("!series_matrix_table_end")
-        )
+        def numeric_lines():
+            # Returning stops iteration; filtering just the marker would also
+            # feed any trailing GEO metadata into NumPy's numeric parser.
+            found_row = False
+            for line in file:
+                if line.startswith("!series_matrix_table_end"):
+                    if not found_row:
+                        raise ValueError("Matrix table must contain at least one data row.")
+                    return
+                if not line.strip():
+                    continue
+                if len(line.rstrip("\r\n").split("\t")) != len(header):
+                    raise ValueError("Matrix data row does not match the table header.")
+                found_row = True
+                yield line
+            raise ValueError("Matrix table-end marker was not found in the dataset.")
 
         # Ignore the first column because it contains probe identifiers.
         A = np.loadtxt(
-            numeric_lines,
+            numeric_lines(),
             delimiter="\t",
             usecols=range(1, len(header)),
+            comments=None,
+            ndmin=2,
         )
+
+    if not np.isfinite(A).all():
+        raise ValueError("Matrix table must contain only finite numeric values.")
 
     return A, sample_ids
 
