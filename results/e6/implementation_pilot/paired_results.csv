@@ -1,0 +1,17 @@
+density,instance,method,trial,same_ordered_indices,relative_error_absolute_difference,errors_close,dense_over_sparse_time
+1.0,0,arp,0,True,0.0,True,0.4750722208088543
+1.0,0,rejection_arp,0,True,0.0,True,0.6982651950794884
+1.0,0,rejection_arp,1,True,0.0,True,0.6747578990101634
+1.0,0,arp,1,True,0.0,True,0.6591357197627902
+0.5,0,arp,0,True,0.0,True,0.6878018947931214
+0.5,0,rejection_arp,0,True,0.0,True,0.7661517092596287
+0.5,0,rejection_arp,1,True,0.0,True,0.7567908213385071
+0.5,0,arp,1,True,0.0,True,0.7214029207632128
+0.1,0,arp,0,True,0.0,True,0.5745748949018838
+0.1,0,rejection_arp,0,True,0.0,True,0.7387184250689436
+0.1,0,rejection_arp,1,True,4.440892098500626e-16,True,0.6143727827429278
+0.1,0,arp,1,True,0.0,True,0.7484279438700064
+0.01,0,arp,0,True,0.0,True,0.8250551371028558
+0.01,0,rejection_arp,0,True,0.0,True,0.8030717270765302
+0.01,0,rejection_arp,1,True,0.0,True,0.7668196708838169
+0.01,0,arp,1,True,0.0,True,0.8246689421782507

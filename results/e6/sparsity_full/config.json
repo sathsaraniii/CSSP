@@ -1,0 +1,260 @@
+{
+  "size": 500,
+  "k": 10,
+  "densities": [
+    1.0,
+    0.5,
+    0.1,
+    0.01
+  ],
+  "instances": 3,
+  "trials": 10,
+  "data_seed": 42,
+  "trial_seed": 0,
+  "no_plots": false,
+  "run_name": "sparsity_full",
+  "experiment": "E6",
+  "status": "complete",
+  "numpy_version": "2.5.2",
+  "scipy_version": "1.18.1",
+  "platform": "macOS-26.6-arm64-arm-64bit-Mach-O",
+  "blas": {
+    "Compilers": {
+      "c": {
+        "name": "clang",
+        "linker": "ld64",
+        "version": "15.0.0",
+        "commands": "cc"
+      },
+      "cython": {
+        "name": "cython",
+        "linker": "cython",
+        "version": "3.2.9",
+        "commands": "cython"
+      },
+      "c++": {
+        "name": "clang",
+        "linker": "ld64",
+        "version": "15.0.0",
+        "commands": "c++"
+      }
+    },
+    "Machine Information": {
+      "host": {
+        "cpu": "aarch64",
+        "family": "aarch64",
+        "endian": "little",
+        "system": "darwin"
+      },
+      "build": {
+        "cpu": "aarch64",
+        "family": "aarch64",
+        "endian": "little",
+        "system": "darwin"
+      }
+    },
+    "Build Dependencies": {
+      "blas": {
+        "name": "accelerate",
+        "found": true,
+        "version": "unknown",
+        "detection method": "system",
+        "include directory": "unknown",
+        "lib directory": "unknown",
+        "openblas configuration": "unknown",
+        "pc file directory": "unknown"
+      },
+      "lapack": {
+        "name": "accelerate",
+        "found": true,
+        "version": "unknown",
+        "detection method": "system",
+        "include directory": "unknown",
+        "lib directory": "unknown",
+        "openblas configuration": "unknown",
+        "pc file directory": "unknown"
+      }
+    },
+    "Python Information": {
+      "path": "/private/var/folders/g3/pffjr_y96bq06blnkf72x_hw0000gn/T/build-env-dg3jp86d/bin/python",
+      "version": "3.14"
+    },
+    "SIMD Extensions": {
+      "baseline": [
+        "NEON",
+        "NEON_FP16",
+        "NEON_VFPV4",
+        "ASIMD"
+      ],
+      "found": [
+        "ASIMDHP",
+        "ASIMDDP"
+      ],
+      "not found": [
+        "ASIMDFHM"
+      ]
+    }
+  },
+  "threads": [
+    {
+      "user_api": "blas",
+      "internal_api": "accelerate",
+      "num_threads": 1,
+      "verification": "BLASGetThreading",
+      "scope": "calling thread"
+    }
+  ],
+  "matrices": [
+    {
+      "instance": 0,
+      "density": 1.0,
+      "actual_density": 1.0,
+      "nnz": 250000,
+      "zero_rows": 0,
+      "zero_columns": 0,
+      "dense_bytes": 2000000,
+      "csr_bytes": 3002004,
+      "svd_optimal_error": 0.9623123445232663,
+      "sha256": "4c5a4cf799ad84bb4e58aff93209f761a03508a3c4d561b98b28ddca3bc2dd26"
+    },
+    {
+      "instance": 0,
+      "density": 0.5,
+      "actual_density": 0.5,
+      "nnz": 125000,
+      "zero_rows": 0,
+      "zero_columns": 0,
+      "dense_bytes": 2000000,
+      "csr_bytes": 1502004,
+      "svd_optimal_error": 0.961839207108861,
+      "sha256": "03b825b7db8b7cc12bbbfe23233235b59acd3267eac29e419085e05ccbbb25da"
+    },
+    {
+      "instance": 0,
+      "density": 0.1,
+      "actual_density": 0.1,
+      "nnz": 25000,
+      "zero_rows": 0,
+      "zero_columns": 0,
+      "dense_bytes": 2000000,
+      "csr_bytes": 302004,
+      "svd_optimal_error": 0.9603026713960174,
+      "sha256": "41821811e13dc31c6d47eb745d27c868f5ce240ef9dbb8f5cbd8d5fb8ecda8d0"
+    },
+    {
+      "instance": 0,
+      "density": 0.01,
+      "actual_density": 0.01,
+      "nnz": 2500,
+      "zero_rows": 3,
+      "zero_columns": 5,
+      "dense_bytes": 2000000,
+      "csr_bytes": 32004,
+      "svd_optimal_error": 0.9456203755576299,
+      "sha256": "8aea955d477828ecba162bda402e75c6c2722c53918fbd5f90aeaa8a4633dcce"
+    },
+    {
+      "instance": 1,
+      "density": 1.0,
+      "actual_density": 1.0,
+      "nnz": 250000,
+      "zero_rows": 0,
+      "zero_columns": 0,
+      "dense_bytes": 2000000,
+      "csr_bytes": 3002004,
+      "svd_optimal_error": 0.962188832133282,
+      "sha256": "8994822103540a0d9166e1737cf780478cf590356b06fd0b9f7b04bf8b481542"
+    },
+    {
+      "instance": 1,
+      "density": 0.5,
+      "actual_density": 0.5,
+      "nnz": 125000,
+      "zero_rows": 0,
+      "zero_columns": 0,
+      "dense_bytes": 2000000,
+      "csr_bytes": 1502004,
+      "svd_optimal_error": 0.9622212337453723,
+      "sha256": "682b374c71e9d9bfdba6edb1359fa6d49c688ab26f693390eb387ea9a3a5fd74"
+    },
+    {
+      "instance": 1,
+      "density": 0.1,
+      "actual_density": 0.1,
+      "nnz": 25000,
+      "zero_rows": 0,
+      "zero_columns": 0,
+      "dense_bytes": 2000000,
+      "csr_bytes": 302004,
+      "svd_optimal_error": 0.9604011685323304,
+      "sha256": "77bc568fd18e8b8b207ba2fde60b6d9582d582b2ab309e4df6e117607edee1e4"
+    },
+    {
+      "instance": 1,
+      "density": 0.01,
+      "actual_density": 0.01,
+      "nnz": 2500,
+      "zero_rows": 3,
+      "zero_columns": 4,
+      "dense_bytes": 2000000,
+      "csr_bytes": 32004,
+      "svd_optimal_error": 0.945047850499226,
+      "sha256": "3f1cec8e657cd581e670741764181c708bba083f7c8d0b397d36abe1026b92bd"
+    },
+    {
+      "instance": 2,
+      "density": 1.0,
+      "actual_density": 1.0,
+      "nnz": 250000,
+      "zero_rows": 0,
+      "zero_columns": 0,
+      "dense_bytes": 2000000,
+      "csr_bytes": 3002004,
+      "svd_optimal_error": 0.9623468035612032,
+      "sha256": "ce0fc73c71af657db40095a44227c9cfcb0d46d9f41ca872bc91adbdda2c776e"
+    },
+    {
+      "instance": 2,
+      "density": 0.5,
+      "actual_density": 0.5,
+      "nnz": 125000,
+      "zero_rows": 0,
+      "zero_columns": 0,
+      "dense_bytes": 2000000,
+      "csr_bytes": 1502004,
+      "svd_optimal_error": 0.962471472989175,
+      "sha256": "6c389a44a007b6b8645a964e8dfd77c92a927aca3207009d8758d5d2dfe081b3"
+    },
+    {
+      "instance": 2,
+      "density": 0.1,
+      "actual_density": 0.1,
+      "nnz": 25000,
+      "zero_rows": 0,
+      "zero_columns": 0,
+      "dense_bytes": 2000000,
+      "csr_bytes": 302004,
+      "svd_optimal_error": 0.9597614944411064,
+      "sha256": "d2e2e4edda83c81d45545a65bcd5a28fdfb1ab4c85c4ed64b4d518a492a58e0f"
+    },
+    {
+      "instance": 2,
+      "density": 0.01,
+      "actual_density": 0.01,
+      "nnz": 2500,
+      "zero_rows": 2,
+      "zero_columns": 5,
+      "dense_bytes": 2000000,
+      "csr_bytes": 32004,
+      "svd_optimal_error": 0.942329044702736,
+      "sha256": "b2ba7803368e506b6613eb26896f148cce76a34ac8b5e24654c8e789323adda7"
+    }
+  ],
+  "generation": "SeedSequence([data_seed,instance]): independent Gaussian values and permutation; round(density*size^2) nested positions; unit Frobenius norm",
+  "workflow": "V=orth(A.T@SparseStack); k sketch columns; C=A[:,J], X=solve(V[J,:].T,V.T); factorized oblique CSSP",
+  "timing": "Standalone basis+selection+factor construction, including validation; excludes conversion, generation, baseline SVD, error evaluation and I/O",
+  "storage": "Numeric buffer sizes only; CSR data+indices+indptr, dense nbytes; NOT peak process memory. Both representations coexist for matching.",
+  "aggregation": "Within-instance means for accuracy/storage or medians for timings, then equally weighted instance centers",
+  "pairs_with_different_indices": 0,
+  "pairs_with_error_difference": 0
+}

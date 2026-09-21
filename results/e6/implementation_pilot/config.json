@@ -1,0 +1,164 @@
+{
+  "size": 100,
+  "k": 5,
+  "densities": [
+    1.0,
+    0.5,
+    0.1,
+    0.01
+  ],
+  "instances": 1,
+  "trials": 2,
+  "data_seed": 42,
+  "trial_seed": 0,
+  "no_plots": false,
+  "run_name": "implementation_pilot",
+  "experiment": "E6",
+  "status": "complete",
+  "numpy_version": "2.5.2",
+  "scipy_version": "1.18.1",
+  "platform": "macOS-26.6-arm64-arm-64bit-Mach-O",
+  "blas": {
+    "Compilers": {
+      "c": {
+        "name": "clang",
+        "linker": "ld64",
+        "version": "15.0.0",
+        "commands": "cc"
+      },
+      "cython": {
+        "name": "cython",
+        "linker": "cython",
+        "version": "3.2.9",
+        "commands": "cython"
+      },
+      "c++": {
+        "name": "clang",
+        "linker": "ld64",
+        "version": "15.0.0",
+        "commands": "c++"
+      }
+    },
+    "Machine Information": {
+      "host": {
+        "cpu": "aarch64",
+        "family": "aarch64",
+        "endian": "little",
+        "system": "darwin"
+      },
+      "build": {
+        "cpu": "aarch64",
+        "family": "aarch64",
+        "endian": "little",
+        "system": "darwin"
+      }
+    },
+    "Build Dependencies": {
+      "blas": {
+        "name": "accelerate",
+        "found": true,
+        "version": "unknown",
+        "detection method": "system",
+        "include directory": "unknown",
+        "lib directory": "unknown",
+        "openblas configuration": "unknown",
+        "pc file directory": "unknown"
+      },
+      "lapack": {
+        "name": "accelerate",
+        "found": true,
+        "version": "unknown",
+        "detection method": "system",
+        "include directory": "unknown",
+        "lib directory": "unknown",
+        "openblas configuration": "unknown",
+        "pc file directory": "unknown"
+      }
+    },
+    "Python Information": {
+      "path": "/private/var/folders/g3/pffjr_y96bq06blnkf72x_hw0000gn/T/build-env-dg3jp86d/bin/python",
+      "version": "3.14"
+    },
+    "SIMD Extensions": {
+      "baseline": [
+        "NEON",
+        "NEON_FP16",
+        "NEON_VFPV4",
+        "ASIMD"
+      ],
+      "found": [
+        "ASIMDHP",
+        "ASIMDDP"
+      ],
+      "not found": [
+        "ASIMDFHM"
+      ]
+    }
+  },
+  "threads": [
+    {
+      "user_api": "blas",
+      "internal_api": "accelerate",
+      "num_threads": 1,
+      "verification": "BLASGetThreading",
+      "scope": "calling thread"
+    }
+  ],
+  "matrices": [
+    {
+      "instance": 0,
+      "density": 1.0,
+      "actual_density": 1.0,
+      "nnz": 10000,
+      "zero_rows": 0,
+      "zero_columns": 0,
+      "dense_bytes": 80000,
+      "csr_bytes": 120404,
+      "svd_optimal_error": 0.9095426945743457,
+      "sha256": "49817842b0e78f795f810a4175781b6ed733df9189c640f3cf4a35ee0fd52698"
+    },
+    {
+      "instance": 0,
+      "density": 0.5,
+      "actual_density": 0.5,
+      "nnz": 5000,
+      "zero_rows": 0,
+      "zero_columns": 0,
+      "dense_bytes": 80000,
+      "csr_bytes": 60404,
+      "svd_optimal_error": 0.9100007511469635,
+      "sha256": "02cd31d81a53a072f00e646e238a08480cf63fe7703fd239ad53637c5254c1c2"
+    },
+    {
+      "instance": 0,
+      "density": 0.1,
+      "actual_density": 0.1,
+      "nnz": 1000,
+      "zero_rows": 0,
+      "zero_columns": 0,
+      "dense_bytes": 80000,
+      "csr_bytes": 12404,
+      "svd_optimal_error": 0.8814503721015318,
+      "sha256": "5f993e1bcbe659f9d59c143d4e55e9b61babca7f6bd7a5874f03316000983d68"
+    },
+    {
+      "instance": 0,
+      "density": 0.01,
+      "actual_density": 0.01,
+      "nnz": 100,
+      "zero_rows": 35,
+      "zero_columns": 45,
+      "dense_bytes": 80000,
+      "csr_bytes": 1604,
+      "svd_optimal_error": 0.7716043014116448,
+      "sha256": "736ce20b55d766d0479186a1e7cf823b85216ff8b171f5b2eb432d87b1070fcd"
+    }
+  ],
+  "generation": "SeedSequence([data_seed,instance]): independent Gaussian values and permutation; round(density*size^2) nested positions; unit Frobenius norm",
+  "workflow": "V=orth(A.T@SparseStack); k sketch columns; C=A[:,J], X=solve(V[J,:].T,V.T); factorized oblique CSSP",
+  "timing": "Standalone basis+selection+factor construction, including validation; excludes conversion, generation, baseline SVD, error evaluation and I/O",
+  "storage": "Numeric buffer sizes only; CSR data+indices+indptr, dense nbytes; NOT peak process memory. Both representations coexist for matching.",
+  "aggregation": "Within-instance means for accuracy/storage or medians for timings, then equally weighted instance centers",
+  "pairs_with_different_indices": 0,
+  "pairs_with_error_difference": 0
+}
