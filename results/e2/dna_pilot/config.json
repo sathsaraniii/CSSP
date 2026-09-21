@@ -1,0 +1,34 @@
+{
+  "datasets": [
+    "dna"
+  ],
+  "ks": [
+    5,
+    10
+  ],
+  "trials": 2,
+  "m": 160,
+  "n": 120,
+  "numerical_rank": 25,
+  "noise": 0.02,
+  "data_seed": 42,
+  "trial_seed": 0,
+  "p": 10,
+  "q": 1,
+  "dna_path": "/Users/sathsaraniamarasinghe/CSSP/data/DNA_matrix.txt",
+  "run_name": "dna_pilot",
+  "no_plots": true,
+  "experiment": "E2",
+  "status": "complete",
+  "numpy_version": "2.5.2",
+  "python_version": "3.14.6",
+  "datasets_metadata": {
+    "dna": {
+      "shape": [
+        22283,
+        107
+      ],
+      "sha256": "ed89ed1ab0544e13c9c2d3ea6cf9a923611c183fcfc96963e86a96a45f5fbdf1"
+    }
+  }
+}
