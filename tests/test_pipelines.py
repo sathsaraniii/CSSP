@@ -1,6 +1,6 @@
-"""Tests for the row-space methods, selectors, and CSSP pipelines."""
+"""Tests for the row-space methods, selectors, and CSSP pipelines.
 
-""" These check that the main components work together:
+These check that the main components work together:
 - Both SVD methods return the expected shapes and an orthonormal right basis.
 - ARP and Rejection ARP give reproducible selections when the seed is fixed.
 - Selectors return the required number of distinct indices.
@@ -11,7 +11,7 @@
   allowing for numerical roundoff.
 
 Matrices used: small Gaussian matrices, orthonormal bases constructed using QR, and a 
-synthetic low-rank matrix with added noise. """
+synthetic low-rank matrix with added noise."""
 
 from __future__ import annotations
 

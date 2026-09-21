@@ -3,9 +3,9 @@
 ARP: https://arxiv.org/html/2412.13992v2 (prototype and Householder algorithms).
 RSVD: Halko--Martinsson--Tropp, Algorithms 4.4 and 5.1.
 Rejection ARP: https://arxiv.org/html/2510.02513v2 (volume sampling, Section 4).
-These are Python checks, not executions of the authors' MATLAB programs. """
+These are Python checks, not executions of the authors' MATLAB programs.
 
-""" ARP: Compare step-by-step sampling probabilities with a direct residual-projection formulation.
+ARP: Compare step-by-step sampling probabilities with a direct residual-projection formulation.
 
     Randomized SVD: Compare against a separately constructed sketch, power iteration, and projected SVD.
 

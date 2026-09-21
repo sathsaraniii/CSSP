@@ -1,7 +1,7 @@
-"""Scale robustness and MATLAB-reference checks for Osinsky selection."""
+"""Scale robustness and MATLAB-reference checks for Osinsky selection.
 
-""" These compare the selected indices against an independent Python translation of 
-    the authors’ MATLAB procedure.
+These compare the selected indices against an independent Python translation of
+the authors’ MATLAB procedure.
 
 They also check that:
 - Multiplying the input matrix by very small or large factors does not change the selection.
