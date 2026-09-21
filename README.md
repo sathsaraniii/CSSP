@@ -191,6 +191,54 @@ Best observed errors are not single-run guarantees. Existing folders are not
 overwritten; raw rows are flushed during execution and caught failures are
 marked incomplete in the configuration.
 
+## E4: dense synthetic runtime scaling
+
+`experiments/run_runtime_scaling.py` measures standalone runs of all six
+pipelines on square matrices of sizes 100, 250, 500, and 1000 by default.
+It keeps `k=10`, signal rank 25, and randomized SVD `p=10, q=1` fixed. The signal
+singular values range geometrically from 20 to 1. Noise is normalized so
+`||noise||_F / ||signal||_F = 0.02` across sizes; this is different from E2's
+per-entry noise setting. One fixed matrix per size is shared across all runs.
+
+```bash
+python -m pip install -e ".[experiments]"
+
+# Pilot: two sizes, three measured repetitions per pipeline
+python experiments/run_runtime_scaling.py --sizes 100 250 --repeats 3 --run-name runtime_pilot
+
+# Full initial study: four sizes, ten measured repetitions per pipeline
+python experiments/run_runtime_scaling.py --run-name runtime_full
+```
+
+Every pipeline computes its own basis and only its orthogonal reconstruction.
+One warm-up per method/size is discarded. Measured repetitions shuffle method
+order and vary recorded seeds. Timings include existing helper validation and
+column extraction (once, inside reconstruction), but exclude generation, error
+evaluation, optimal-error baseline work, oblique reconstruction, and I/O.
+The algorithm time is the sum of the three measured stage times. Variation
+includes both system noise and seed-dependent algorithm work. Summaries report
+median, 25th/75th percentiles, mean, sample standard deviation, and min/max;
+the median total need not equal the sum of the stage medians.
+
+Execution is sequential with one verified BLAS thread by default. `threadpoolctl`
+controls supported BLAS libraries; Apple Accelerate uses its macOS 15+ native
+[BLAS threading API](https://developer.apple.com/documentation/accelerate/blassetthreading(_:))
+and verifies the setting with `BLASGetThreading`. On Accelerate this runner only
+supports `--threads 1`. Unsupported/unverifiable configurations stop rather than
+claiming controlled timings. Close other heavy applications during measurement.
+
+Output is `results/e4/<run-name>/`, containing configuration (including platform,
+BLAS/thread settings and matrix hashes), raw timings, a summary, and four plots
+for algorithm, basis, selection, and reconstruction runtimes. Use `--no-plots`
+for CSV-only output. Existing run directories are protected; partial results
+are retained on interruption. Optional larger sizes can be supplied via
+`--sizes`, subject to available memory and runtime. There is no automatic
+resource-limit detection.
+
+The 10,000-square dense and million-row sparse Rejection ARP reference examples
+are **not** part of this runner. This is a local dense scaling study, not a
+reproduction of the papers' performance results.
+
 ## Python API
 
 After the editable installation above, run all six pipelines with:

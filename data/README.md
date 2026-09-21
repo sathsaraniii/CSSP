@@ -21,3 +21,16 @@ Please cite the original study and the GEO accession when reporting results.
 
 Please cite the SuiteSparse Matrix Collection and the matrix source when
 reporting results.
+
+## `rejection_arp/`
+
+Reference definitions for the two synthetic runtime matrices from Epperly's
+*Adaptive randomized pivoting and volume sampling*:
+
+- Dense: 10,000 × 10,000 Gaussian matrix with inverse-square row scaling.
+- Sparse: 1,000,000 × 10,000, with 30 Gaussian nonzeros per column and the same
+  row scaling.
+
+See [rejection_arp/README.md](rejection_arp/README.md) for the paper, author code,
+generation formulas, storage requirements, and row/column orientation caveat.
+Only references are currently included; the matrix files are not yet generated.

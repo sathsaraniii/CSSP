@@ -21,6 +21,7 @@ datasets = [
 ]
 experiments = [
     "matplotlib>=3.7",
+    "threadpoolctl>=3.5",
 ]
 
 [tool.setuptools]
