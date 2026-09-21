@@ -155,6 +155,42 @@ computed; an interrupted run retains partial data and is not marked complete.
 Ratios with zero SVD baseline are `NaN`. The baseline is not the exhaustive CSSP
 optimum used in E1. This runner measures accuracy, not runtime performance.
 
+## E3: randomization variability at fixed k
+
+`experiments/run_randomization_variability.py` holds each matrix and its exact
+SVD basis fixed. It runs Osinsky once and ARP/Rejection ARP 100 times each by
+default, at `k=10`. Only selection is randomized; this experiment does not use
+randomized SVD or benchmark runtime. Synthetic data defaults match E2, and the
+DNA option uses the full matrix.
+
+```bash
+# Quick workflow check
+python experiments/run_randomization_variability.py --datasets synthetic --trials 3 --run-name synthetic_pilot
+
+# Full 100-trial studies
+python experiments/run_randomization_variability.py --datasets synthetic --run-name synthetic_100_trials
+python experiments/run_randomization_variability.py --datasets dna --run-name dna_100_trials
+```
+
+Omit `--datasets` to run both; change `--k` for another fixed column budget.
+`--data-seed` controls synthetic generation and `--trial-seed` derives independent
+selector seed streams. Plotting uses the same optional `experiments` dependency
+as E2; `--no-plots` writes CSVs without Matplotlib.
+
+Results are saved under `results/e3/<run-name>/`: `config.json`, per-run
+`raw_results.csv`, `summary.csv`, and `plots/<dataset>_variability.png`.
+The summary includes mean, sample standard deviation, median, empirical 5th/95th
+percentiles, min/max, and fractions better/tied/worse than Osinsky. Comparisons
+use an absolute error tolerance of `100 * eps * max(m,n) * ||A||_F`, saved with
+the results; this tolerance does not redefine a zero SVD baseline. Zero-baseline
+ratios remain undefined (`NaN`).
+
+Boxplots show randomized relative errors with a fixed Osinsky reference line;
+whiskers mark the empirical 5th/95th percentiles, not confidence intervals.
+Best observed errors are not single-run guarantees. Existing folders are not
+overwritten; raw rows are flushed during execution and caught failures are
+marked incomplete in the configuration.
+
 ## Python API
 
 After the editable installation above, run all six pipelines with:
