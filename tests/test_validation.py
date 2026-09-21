@@ -1,5 +1,14 @@
 """Public inputs must fail clearly before numerical work or lossy coercion."""
 
+""" These ensure incorrect inputs fail clearly rather than silently producing misleading results.
+
+Examples include:
+- Invalid ranks, oversampling values, iteration counts, and block sizes.
+- Empty, incorrectly shaped, complex, or nonfinite matrices.
+- Nonorthonormal bases.
+- Duplicate, out-of-range, Boolean, or fractional column indices.
+- Valid NumPy integer values that should be accepted. """
+
 from __future__ import annotations
 
 import numpy as np

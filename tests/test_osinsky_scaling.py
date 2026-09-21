@@ -1,5 +1,17 @@
 """Scale robustness and MATLAB-reference checks for Osinsky selection."""
 
+""" These compare the selected indices against an independent Python translation of 
+    the authors’ MATLAB procedure.
+
+They also check that:
+- Multiplying the input matrix by very small or large factors does not change the selection.
+- Intermediate calculations avoid overflow or invalid division in the tested cases.
+- The zero matrix is handled.
+- Input arrays are not modified.
+- Returned columns and approximations retain the original matrix’s scale.
+
+This directly checks both reference agreement and the numerical-scaling fix."""
+
 from __future__ import annotations
 
 import numpy as np

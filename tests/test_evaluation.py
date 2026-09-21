@@ -1,5 +1,15 @@
 """Regression tests for reporting errors with a zero optimal baseline."""
 
+""" These check:
+- Absolute and relative approximation errors.
+- Correct ratios when the optimal error is positive—even when extremely small.
+- NaN for the optimality ratio when the optimal error is zero.
+- Handling of zero input matrices and small roundoff errors.
+- Rejection of invalid baseline values.
+
+The zero-baseline NaN is the repository’s explicit convention for an undefined 
+comparison; it is not a claim that the approximation itself is invalid."""
+
 from __future__ import annotations
 
 import numpy as np

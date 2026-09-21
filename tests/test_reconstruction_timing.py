@@ -1,5 +1,15 @@
 """Deterministic timing checks; no sleeps or wall-clock thresholds."""
 
+""" verify that: algorithm seconds = basis seconds + selection_seconds+ reconstruction seconds.
+
+They also verify that:
+- Making the unused reconstruction slower does not change the reported algorithm time.
+- Baseline calculation does not enter that algorithm time.
+- Both reconstruction outputs remain available.
+- Reconstruction aliases select the correct result.
+
+These use a controlled fake clock to test accounting reliably. They do not measure real algorithm speed. """
+
 from __future__ import annotations
 
 import numpy as np

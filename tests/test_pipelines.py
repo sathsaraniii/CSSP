@@ -1,5 +1,18 @@
 """Tests for the row-space methods, selectors, and CSSP pipelines."""
 
+""" These check that the main components work together:
+- Both SVD methods return the expected shapes and an orthonormal right basis.
+- ARP and Rejection ARP give reproducible selections when the seed is fixed.
+- Selectors return the required number of distinct indices.
+- The selected basis rows form a nonsingular matrix.
+- All four or six pipelines run and share the intended basis.
+- Reconstruction dimensions and error values are valid.
+- Orthogonal reconstruction has no larger Frobenius error than oblique reconstruction, 
+  allowing for numerical roundoff.
+
+Matrices used: small Gaussian matrices, orthonormal bases constructed using QR, and a 
+synthetic low-rank matrix with added noise. """
+
 from __future__ import annotations
 
 import numpy as np

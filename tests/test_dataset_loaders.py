@@ -1,5 +1,15 @@
 """Small, local fixtures covering GEO parsing and sparse subset selection."""
 
+""" These check that experiment data is interpreted correctly:
+- GEO gene-expression table parsing.
+- Single-row and single-column inputs.
+- Malformed headers, missing markers, and invalid values.
+- Sparse matrices with explicitly stored zeros or duplicate entries.
+- Removing zero columns correctly.
+- Reproducible column sampling.
+- Mapping sampled columns back to their original indices.
+- Compatibility with an older SciPy sparse API. """
+
 from __future__ import annotations
 
 import importlib.util
