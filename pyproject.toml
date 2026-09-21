@@ -19,6 +19,9 @@ dev = [
 datasets = [
     "scipy>=1.10",
 ]
+experiments = [
+    "matplotlib>=3.7",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}

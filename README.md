@@ -113,6 +113,48 @@ the two reconstruction calls. Both approximations remain available for compariso
 The existing `total_seconds` still includes both reconstructions and evaluation,
 but excludes the optimal-error baseline; it is not an end-to-end wall-clock time.
 
+## E2: accuracy versus selected-column count
+
+`experiments/run_accuracy_vs_k.py` compares all six combinations on a fixed
+small synthetic matrix and/or the full DNA matrix. It evaluates only orthogonal
+reconstruction, using one exact SVD per dataset for both the exact basis and
+the optimal-error baseline. Randomized bases are shared across selectors per
+trial; basis and selector seed streams are separate. Exact-SVD + Osinsky runs
+once per `k`; each other combination runs 30 trials by default.
+
+Install optional plotting support (commands below use an activated environment):
+
+```bash
+python -m pip install -e ".[dev,datasets,experiments]"
+
+# Small workflow pilot, not the final statistical experiment
+python experiments/run_accuracy_vs_k.py --datasets synthetic --ks 5 10 --trials 3 --run-name synthetic_pilot
+
+# Full synthetic sweep (160 x 120, k=5,10,20,30,40; 30 trials)
+python experiments/run_accuracy_vs_k.py --datasets synthetic --run-name synthetic_30_trials
+
+# Full DNA sweep with the same k values and trial count (more expensive)
+python experiments/run_accuracy_vs_k.py --datasets dna --run-name dna_30_trials
+```
+
+Omitting `--datasets` runs both. Add `--no-plots` for CSV-only output without
+Matplotlib. Synthetic generation uses a fixed data seed (42), signal rank 25,
+and noise 0.02; randomized SVD uses `--p 10 --q 1`. `--data-seed` controls only
+synthetic generation; `--trial-seed` controls independent algorithm seed streams.
+
+Each new run saves to `results/e2/<run-name>/`:
+
+- `config.json`: settings, dataset shapes/hashes, versions, and completion status.
+- `raw_results.csv`: every selection, seed, error, and DNA sample identifiers.
+- `summary.csv`: mean, sample standard deviation, median, minimum, and maximum.
+- `plots/`: relative-error and SVD-optimality-ratio curves, with ±1 standard
+  deviation bands for randomized methods (unless `--no-plots`).
+
+Existing run folders are never overwritten. Raw rows are flushed as they are
+computed; an interrupted run retains partial data and is not marked complete.
+Ratios with zero SVD baseline are `NaN`. The baseline is not the exhaustive CSSP
+optimum used in E1. This runner measures accuracy, not runtime performance.
+
 ## Python API
 
 After the editable installation above, run all six pipelines with:
