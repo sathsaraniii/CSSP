@@ -1,5 +1,8 @@
 import numpy as np
 
+from cssp._validation import as_real_matrix, validate_rank
+
+
 def deterministic_svd(A: np.ndarray, k: int):
     """
     Compute a deterministic rank-k truncated SVD.
@@ -20,17 +23,8 @@ def deterministic_svd(A: np.ndarray, k: int):
     Vt_k : np.ndarray
         First k rows of V^T, shape (k, n).
     """
-    A = np.asarray(A, dtype=float)
-
-    if A.ndim != 2:
-        raise ValueError("A must be a 2D matrix.")
-
-    m, n = A.shape
-
-    if not 1 <= k <= min(m, n):
-        raise ValueError(
-            f"k must satisfy 1 <= k <= min(m, n) = {min(m, n)}."
-        )
+    A = as_real_matrix(A)
+    k = validate_rank(k, A.shape)
 
     # Deterministic SVD
     U, S, Vt = np.linalg.svd(A, full_matrices=False)

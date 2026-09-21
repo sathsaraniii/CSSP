@@ -1,5 +1,7 @@
 import numpy as np
 
+from cssp._validation import as_real_matrix, validate_integer, validate_rank
+
 
 def randomized_svd(
     A: np.ndarray,
@@ -33,23 +35,11 @@ def randomized_svd(
     Vt_k : np.ndarray
         Approximate right singular vectors, shape (k, n).
     """
-    A = np.asarray(A, dtype=float)
-
-    if A.ndim != 2:
-        raise ValueError("A must be a 2D matrix.")
-
+    A = as_real_matrix(A)
+    k = validate_rank(k, A.shape)
+    p = validate_integer(p, name="p", minimum=0)
+    q = validate_integer(q, name="q", minimum=0)
     m, n = A.shape
-
-    if not 1 <= k <= min(m, n):
-        raise ValueError(
-            f"k must satisfy 1 <= k <= min(m, n) = {min(m, n)}."
-        )
-
-    if p < 0:
-        raise ValueError("Oversampling parameter p must be non-negative.")
-
-    if q < 0:
-        raise ValueError("Number of power iterations q must be non-negative.")
 
     # Number of random samples
     l = min(k + p, min(m, n))

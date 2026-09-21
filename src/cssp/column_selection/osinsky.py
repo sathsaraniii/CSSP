@@ -11,6 +11,7 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
+from cssp._validation import as_real_matrix, validate_rank
 from cssp.column_selection.arp import _as_orthonormal_basis, _householder_vector
 
 
@@ -34,13 +35,13 @@ def osinsky_select(
     verbose:
         Print the selected index and score at every step.
     return_scores:
-        If true, also return the score vector from each iteration.
+        If true, also return the score vector from each iteration. Scores
+        are squared residual-to-basis norm ratios for ``A / max(abs(A))``
+        (or the unscaled zero matrix). This normalization preserves the
+        minimizing column while avoiding overflow or underflow from a
+        common extreme input scale.
     """
-    A = np.asarray(A, dtype=float)
-    if A.ndim != 2:
-        raise ValueError("A must be a 2-D matrix.")
-    if not np.all(np.isfinite(A)):
-        raise ValueError("A must contain only finite values.")
+    A = as_real_matrix(A)
 
     V_basis = _as_orthonormal_basis(V)
     if V_basis.shape[0] != A.shape[1]:
@@ -52,7 +53,12 @@ def osinsky_select(
     n, k = V_basis.shape
     # The MATLAB reference stores the working basis as k x n.
     V_work = V_basis.T.copy()
-    residual = A - (A @ V_basis) @ V_basis.T
+    # A common positive scale multiplies every MATLAB selection score by
+    # the same factor, so it cannot change the exact-arithmetic minimizer.
+    # Normalize before the projection as well as before squaring residuals.
+    scale = float(np.max(np.abs(A)))
+    A_work = A / scale if scale > 0.0 else A.copy()
+    residual = A_work - (A_work @ V_basis) @ V_basis.T
 
     selected: list[int] = []
     score_history: list[Array] = []
@@ -124,13 +130,12 @@ def osinsky_cssp(
 
     If ``V`` is not supplied, this function computes the exact top-``k``
     right singular basis. The returned approximation is the oblique
-    interpolatory approximation used in the paper's analysis.
+    interpolatory approximation used in the paper's analysis. Score
+    histories use the normalized units described by :func:`osinsky_select`;
+    selected columns and the approximation retain the original input scale.
     """
-    A = np.asarray(A, dtype=float)
-    if A.ndim != 2:
-        raise ValueError("A must be a 2-D matrix.")
-    if not 1 <= k <= min(A.shape):
-        raise ValueError(f"k must satisfy 1 <= k <= min(A.shape); got {k}.")
+    A = as_real_matrix(A)
+    k = validate_rank(k, A.shape)
 
     if V is None:
         _, _, Vt = np.linalg.svd(A, full_matrices=False)

@@ -1,4 +1,4 @@
-"""Compatibility entry point for tools that still expect setup.py."""
+"""Compatibility entry point for tools that still expect setup.py file."""
 
 from setuptools import setup
 

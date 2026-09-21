@@ -11,24 +11,19 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
+from cssp._validation import as_real_matrix, validate_rank
 
 Array = NDArray[np.float64]
 
 
 def _as_orthonormal_basis(V: Array) -> Array:
     """Validate and copy an ``n x k`` matrix with orthonormal columns."""
-    V = np.asarray(V, dtype=float)
-    if V.ndim != 2:
-        raise ValueError("V must be a 2-D matrix.")
-
+    V = as_real_matrix(V, name="V")
     n, k = V.shape
     if not 1 <= k <= n:
         raise ValueError(
             f"V must have shape (n, k) with 1 <= k <= n; got {V.shape}."
         )
-    if not np.all(np.isfinite(V)):
-        raise ValueError("V must contain only finite values.")
-
     gram_error = np.linalg.norm(V.T @ V - np.eye(k), ord="fro")
     tolerance = 1e-8 * max(1, k)
     if gram_error > tolerance:
@@ -145,11 +140,8 @@ def arp_cssp(
     The returned approximation is the paper's oblique interpolatory one.
     New experiments should use ``arp_select`` or ``run_cssp_pipeline``.
     """
-    A = np.asarray(A, dtype=float)
-    if A.ndim != 2:
-        raise ValueError("A must be a 2-D matrix.")
-    if not 1 <= k <= min(A.shape):
-        raise ValueError(f"k must satisfy 1 <= k <= min(A.shape); got {k}.")
+    A = as_real_matrix(A)
+    k = validate_rank(k, A.shape)
 
     if V is None:
         _, _, Vt = np.linalg.svd(A, full_matrices=False)

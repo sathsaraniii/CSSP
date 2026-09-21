@@ -12,6 +12,7 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
+from cssp._validation import validate_integer
 from cssp.column_selection.arp import _as_orthonormal_basis
 
 
@@ -64,14 +65,12 @@ def rejection_arp_select(
         If true, also return leverage scores, proposal counts, block counts,
         and the observed acceptance rate.
     """
+    if block_size is not None:
+        block_size = validate_integer(block_size, name="block_size", minimum=1)
     V_basis = _as_orthonormal_basis(V)
     n, k = V_basis.shape
-
     if block_size is None:
         block_size = k
-    if not isinstance(block_size, (int, np.integer)) or block_size <= 0:
-        raise ValueError("block_size must be a positive integer.")
-    block_size = int(block_size)
 
     rng = (
         random_state

@@ -1,15 +1,17 @@
 """End-to-end pipelines for the CSSP experiments.
 
-The original four combinations remain available through
-``run_four_pipelines``. ``run_six_pipelines`` adds Rejection ARP to each
-row-space method without changing the original configurations.
+The original four combinations remain available through ``run_four_pipelines``. 
+``run_six_pipelines`` adds Rejection ARP to each row-space method without 
+changing the original configurations.
 
-The original combinations are:
+The six pipelines are:
 
 1. deterministic truncated SVD + deterministic Osinsky selection;
-2. deterministic truncated SVD + randomized ARP selection;
-3. randomized SVD + deterministic Osinsky selection;
-4. randomized SVD + randomized ARP selection.
+2. randomized SVD + deterministic Osinsky selection;
+3. deterministic truncated SVD + randomized ARP selection;
+4. randomized SVD + randomized ARP selection;
+5. deterministic truncated SVD + Rejection ARP selection;
+6. randomized SVD + Rejection ARP selection.
 """
 
 from __future__ import annotations
@@ -20,6 +22,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from cssp._validation import as_real_matrix, validate_integer, validate_rank
 from cssp.basis.deterministic_svd import deterministic_svd
 from cssp.basis.randomized_svd import randomized_svd
 from cssp.column_selection.arp import arp_select
@@ -50,13 +53,8 @@ SIX_PIPELINE_CONFIGS: dict[str, tuple[str, str]] = {
 
 
 def _validate_matrix_rank(A: Array, k: int) -> Array:
-    A = np.asarray(A, dtype=float)
-    if A.ndim != 2:
-        raise ValueError("A must be a 2-D matrix.")
-    if not np.all(np.isfinite(A)):
-        raise ValueError("A must contain only finite values.")
-    if not 1 <= k <= min(A.shape):
-        raise ValueError(f"k must satisfy 1 <= k <= min(A.shape); got {k}.")
+    A = as_real_matrix(A)
+    validate_rank(k, A.shape)
     return A
 
 
@@ -86,6 +84,16 @@ def _normalize_selector(method: str) -> str:
         "column_selection_method must be 'osinsky', 'arp', or "
         "'rejection_arp'."
     )
+
+
+def _normalize_reconstruction(method: str) -> str:
+    if isinstance(method, str):
+        normalized = method.lower().replace("-", "_")
+        if normalized in {"orthogonal", "projection", "least_squares"}:
+            return "orthogonal"
+        if normalized in {"oblique", "interpolatory"}:
+            return "oblique"
+    raise ValueError("reconstruction must be 'orthogonal' or 'oblique'.")
 
 
 def _compute_row_space(
@@ -156,21 +164,33 @@ def _run_with_basis(
         selection_details = {"score_history": history}
     selection_seconds = perf_counter() - selection_started
 
-    reconstruction_started = perf_counter()
+    extraction_started = perf_counter()
     C = selected_columns(A, indices)
-    orthogonal_approximation = orthogonal_cssp_approximation(A, indices)
-    oblique_approximation = oblique_cssp_approximation(A, V, indices)
-    reconstruction_seconds = perf_counter() - reconstruction_started
+    column_extraction_seconds = perf_counter() - extraction_started
 
-    reconstruction_name = reconstruction.lower().replace("-", "_")
-    if reconstruction_name in {"orthogonal", "projection", "least_squares"}:
-        approximation = orthogonal_approximation
-        reconstruction_name = "orthogonal"
-    elif reconstruction_name in {"oblique", "interpolatory"}:
-        approximation = oblique_approximation
-        reconstruction_name = "oblique"
-    else:
-        raise ValueError("reconstruction must be 'orthogonal' or 'oblique'.")
+    # Run the requested method first; retain the other only for comparison.
+    reconstruction_name = _normalize_reconstruction(reconstruction)
+    reconstruction_order = (
+        ("orthogonal", "oblique")
+        if reconstruction_name == "orthogonal"
+        else ("oblique", "orthogonal")
+    )
+    approximations = {}
+    reconstruction_times = {}
+    for method in reconstruction_order:
+        reconstruction_started = perf_counter()
+        if method == "orthogonal":
+            approximations[method] = orthogonal_cssp_approximation(A, indices)
+        else:
+            approximations[method] = oblique_cssp_approximation(A, V, indices)
+        reconstruction_times[method] = perf_counter() - reconstruction_started
+
+    orthogonal_approximation = approximations["orthogonal"]
+    oblique_approximation = approximations["oblique"]
+    approximation = approximations[reconstruction_name]
+    reconstruction_seconds = (
+        column_extraction_seconds + reconstruction_times[reconstruction_name]
+    )
 
     evaluation_started = perf_counter()
     row_space_approximation = (A @ V) @ V.T
@@ -218,10 +238,18 @@ def _run_with_basis(
         "timings": {
             "basis_seconds": basis_seconds,
             "selection_seconds": selection_seconds,
+            "column_extraction_seconds": column_extraction_seconds,
+            "orthogonal_reconstruction_seconds": reconstruction_times["orthogonal"],
+            "oblique_reconstruction_seconds": reconstruction_times["oblique"],
             "reconstruction_seconds": reconstruction_seconds,
             "algorithm_seconds": algorithm_seconds,
             "evaluation_seconds": evaluation_seconds,
-            "total_seconds": algorithm_seconds + evaluation_seconds,
+            # Preserve the previous total's coverage: both reconstructions
+            # and evaluation, but not the separately computed SVD baseline.
+            "total_seconds": (
+                basis_seconds + selection_seconds + column_extraction_seconds
+                + sum(reconstruction_times.values()) + evaluation_seconds
+            ),
         },
         "parameters": {
             "k": k,
@@ -252,6 +280,11 @@ def run_cssp_pipeline(
 ) -> dict[str, Any]:
     """Run one chosen row-space/column-selection combination."""
     A = _validate_matrix_rank(A, k)
+    k = int(k)
+    oversampling = validate_integer(oversampling, name="oversampling", minimum=0)
+    power_iterations = validate_integer(
+        power_iterations, name="power_iterations", minimum=0
+    )
     row_space_method = _normalize_row_space_method(row_space_method)
     column_selection_method = _normalize_selector(column_selection_method)
 
@@ -264,14 +297,9 @@ def run_cssp_pipeline(
         random_state,
     )
 
-    if compute_optimal:
-        if row_space_method == "deterministic":
-            tail_sq = float(np.linalg.norm(A, ord="fro") ** 2 - np.sum(singular_values**2))
-            optimal_error = float(np.sqrt(max(0.0, tail_sq)))
-        else:
-            optimal_error = optimal_rank_k_error(A, k)
-    else:
-        optimal_error = None
+    # Match the MATLAB reference using the full singular-value tail of A,
+    # independently of the chosen (possibly randomized) row-space basis.
+    optimal_error = optimal_rank_k_error(A, k) if compute_optimal else None
 
     return _run_with_basis(
         A,
@@ -305,15 +333,22 @@ def _run_configured_pipelines(
     """Run configured pipelines while sharing each computed row-space basis.
 
     Sharing the bases ensures every selector sees exactly the same ``V`` for
-    its row-space method. It also avoids recomputing either SVD.
+    its row-space method without recomputing a basis for each selector. The
+    optimal-error reference is computed once from the full singular spectrum.
     """
     A = _validate_matrix_rank(A, k)
+    k = int(k)
+    oversampling = validate_integer(oversampling, name="oversampling", minimum=0)
+    power_iterations = validate_integer(
+        power_iterations, name="power_iterations", minimum=0
+    )
 
     U_d, S_d, Vt_d, deterministic_seconds = _compute_row_space(
         A, k, "deterministic", oversampling, power_iterations, random_state
     )
-    tail_sq = float(np.linalg.norm(A, ord="fro") ** 2 - np.sum(S_d**2))
-    optimal_error = float(np.sqrt(max(0.0, tail_sq)))
+
+    # Share the exact SVD-tail reference error across every configuration.
+    optimal_error = optimal_rank_k_error(A, k)
 
     U_r, S_r, Vt_r, randomized_seconds = _compute_row_space(
         A, k, "randomized", oversampling, power_iterations, random_state

@@ -2,6 +2,8 @@
 
 Audience: student preparing a follow-on project in column subset selection  
 Date: 2026-09-03  
+Workspace implementation mapping updated: 2026-09-21
+
 Primary question: What did Cortinovis and Kressner contribute in the supplied paper, how is it realized in the authors' MATLAB repository, and how does that compare with the Python code currently in this workspace?  
 
 ## Scope and assumptions
@@ -60,9 +62,119 @@ The paper sets the initial row-space residual to `A_tilde = A(I-VV^T)` and facto
 
 The authors' `selection_methods/ARP.m` is the stable Algorithm 2.2 selector. It accepts only `V` and returns only `J`; experiment scripts separately form the approximation and error. `get_columns_osinsky.m` implements the derandomized CSSP selection. `get_columns_det_SPSD.m` realizes Algorithm 5.1. The six scripts in `tests/` correspond to Figure 2a, Figure 2b, Figure 3a, Figure 3b, and the two sides of Figure 4. Comparator routines are bundled under `selection_methods/`.
 
-The workspace Python `arp.py` is a conceptual port but not a performance-faithful port. It computes an exact top-`k` SVD internally, projects out each selected direction, and performs a fresh SVD to reorthonormalize after every pivot. The row-space selection law is mathematically aligned with the prototype algorithm, but this gives roughly `O(n r^3)` update work rather than the paper's `O(n r^2)` Householder implementation. It uses a pseudoinverse instead of the triangular solve and returns the oblique approximation/error, whereas the paper's CSSP figures report the smaller orthogonal selected-column projection error.
+The current workspace has six working combinations of deterministic/randomized
+SVD and Osinsky/ARP/Rejection ARP. The previous preliminary descriptions of empty
+modules, a per-pivot SVD in ARP, and a dimensionally invalid Osinsky update no
+longer describe this code.
 
-The workspace Python pipeline is unfinished: `cssp_pipeline.py`, `experiments/run_experiment.py`, `metrics/evaluation.py`, and `reconstruction/cssp_approximation.py` are empty. `osinsky.py` is currently invalid for ordinary shapes: it starts from `E=A` instead of `A-AVV^T` and subtracts an `m x remaining_rank` outer product from an `m x n` matrix. A direct 8 x 10, rank-3 smoke test raised a broadcast `ValueError`. The conventional `randomized_svd.py` may produce an approximate right basis, but it is not the paper's Corollary 2.6 procedure because it returns `k` vectors after a two-sided randomized SVD rather than sketching `A^T` and ARP-selecting `r+2` columns.
+### Six-pipeline implementation map
+
+| # | Result key | Basis construction | Column selector |
+|---|---|---|---|
+| 1 | `deterministic_osinsky` | Deterministic SVD | Osinsky |
+| 2 | `deterministic_arp` | Deterministic SVD | ARP |
+| 3 | `randomized_osinsky` | HMT randomized SVD | Osinsky |
+| 4 | `randomized_arp` | HMT randomized SVD | ARP |
+| 5 | `deterministic_rejection_arp` | Deterministic SVD | Rejection ARP |
+| 6 | `randomized_rejection_arp` | HMT randomized SVD | Rejection ARP |
+
+These are project combinations, not six algorithms all introduced by the ARP
+paper. ARP and the MATLAB Osinsky implementation are mapped to the Cortinovis–
+Kressner codebase; the randomized basis follows HMT, and Rejection ARP follows
+the separate Epperly formulation linked below.
+
+`run_six_pipelines` computes and shares one basis per basis-construction method
+across its three selectors. Every selector independently chooses `k` columns;
+the selections are not combined. Osinsky is deterministic given `A` and `V`,
+but its randomized-SVD pipeline is still randomized through `V`.
+`run_four_pipelines` retains combinations 1–4. All three experiment scripts
+default to four and accept `--pipelines 6` to include combinations 5–6.
+
+### Implementation details
+
+- `arp_select` accepts a precomputed basis and performs adaptive squared-row-norm
+  sampling with Householder updates. It does not recompute an SVD per pivot.
+- `osinsky_select` starts with `A-AVV^T` and applies the MATLAB residual update.
+  A common rescaling of the working matrix protects against input-scale
+  overflow/underflow; diagnostic scores use normalized squared units. Independent
+  Python translations of the MATLAB criterion give matching pivots on the
+  ordinary-scale regression cases.
+- `rejection_arp_select` follows the blocked rejection-sampling formulation in
+  [Epperly, Section 4](https://arxiv.org/html/2510.02513v2#S4). It uses explicit QR
+  and reorthogonalized projections, rather than the reference's maintained
+  Householder representation. The full-basis validation also adds `O(n k^2)`
+  work, so this is not a claim of performance-identical implementation.
+- Orthogonal reconstruction uses least squares; oblique reconstruction solves
+  against `V[J,:].T`. Tests compare the former with independent `Q Q^T A` and
+  verify selected-column interpolation for the latter.
+- Both individual and comparison pipelines compute the optimal error from the
+  full SVD tail, matching the MATLAB experiment baseline. The additional
+  optimality ratio is marked undefined (`NaN`) when that tail is zero; this is
+  this repository's reporting policy, not a rule in the paper.
+- Matrix, index, and integer-parameter checks now reject malformed input before
+  computation. The GEO loader stops at its end marker; sparse preprocessing uses
+  APIs compatible with the declared SciPy minimum and handles stored zeros and
+  duplicate entries without modifying the caller's matrix.
+
+`randomized_svd.py` implements the stabilized HMT range-finder/SVD procedure
+([Halko, Martinsson, Tropp](https://users.oden.utexas.edu/~pgm/Pubs/2010_HMT_random_review.pdf),
+Algorithms 4.4 and 5.1). These project combinations are not the ARP paper's
+Corollary 2.6 construction that sketches `A^T` and selects `r+2` columns.
+
+The current suite includes analytic-error regressions, input and loader boundary
+tests, ARP probability checks, Osinsky reference-pivot checks, RSVD subspace
+checks, and a seeded determinant-distribution sanity check for ARP/Rejection ARP.
+The latter is statistical evidence, not proof. The MATLAB programs and published
+figures have not been executed/reproduced; the single-trial Python experiments,
+timing accounting, and diagnostic overhead remain different from the papers.
+
+### Reconstruction and timing scope
+
+Both orthogonal and oblique approximations are returned. The `reconstruction`
+argument selects the primary approximation and its metrics; it does not disable
+the other reconstruction. The requested method is computed first.
+
+- `reconstruction_seconds` includes column extraction and only the requested
+  reconstruction call.
+- `algorithm_seconds` is basis time plus selection time plus that requested
+  reconstruction time. Neither the unused reconstruction nor evaluation nor
+  the separate exact optimal-error baseline is included.
+- Individual orthogonal and oblique reconstruction times remain available.
+- `total_seconds` retains its component-sum meaning: basis, selection, column
+  extraction, both reconstructions, and evaluation. It excludes the optimal-error
+  baseline and is not an end-to-end wall-clock measurement.
+
+The exact baseline SVD is evaluation work, distinct from construction of the
+basis used for selection. Shared-basis comparison results attribute the basis
+cost to each pipeline; summing their algorithm times is not the actual elapsed
+time of the shared comparison runner. These accounting choices and selector
+validation overhead must be considered when comparing with research timings.
+
+### Current validation evidence
+
+Verification on 21 September 2026: `pytest -q -W error` passed all 515 tests.
+These are parameterized cases, not 515 separate algorithms or datasets.
+
+| Test module | Evidence provided |
+|---|---|
+| `test_pipelines.py` | SVD/basis properties, selection reproducibility, nonsingular selections, and four/six-pipeline integration. |
+| `test_optimal_error.py` | Analytic singular-value-tail baselines, including nearly low-rank matrices. |
+| `test_evaluation.py` | Error normalization, positive-baseline ratios, and the repository's zero-baseline policy. |
+| `test_osinsky_scaling.py` | Independent MATLAB-criterion translation and scale regressions. |
+| `test_reference_algorithms.py` | Direct ARP probabilities, powered-range RSVD checks, sampling distributions, and reconstruction identities. |
+| `test_validation.py` | Matrix, basis, parameter, and index boundary checks. |
+| `test_dataset_loaders.py` | GEO and sparse-loader behaviour on controlled fixtures. |
+| `test_reconstruction_timing.py` | Controlled-clock checks that only the requested reconstruction enters algorithm time. |
+
+The timing tests validate accounting, not speed. Independent Python reference
+formulations are not execution of the authors' MATLAB programs, and statistical
+sampling checks are not proofs of distributional equivalence for every input.
+
+The synthetic six-pipeline demo and all six pipelines on small subsets of both
+bundled real datasets also completed. Full dataset loading was checked, but the
+paper's full rank/trial sweeps were not reproduced. Sparse tests ran with SciPy
+1.18.1 and included a simulated pre-1.15 no-axis `count_nonzero` interface; an
+actual SciPy 1.10 runtime was not used.
 
 ## Paper/code gaps and contradictions
 
@@ -89,4 +201,4 @@ Primary sources reviewed: supplied arXiv v2 PDF; arXiv HTML; SIAM version-of-rec
 - Cortinovis & Kressner, version of record, SIAM Journal on Matrix Analysis and Applications 47(1), 2026, pp. 25-47, DOI 10.1137/24M1719189, https://doi.org/10.1137/24M1719189. Supports publication metadata and final abstract.
 - Alice94/ARP, commit `a57b13e2560d75c6d06505464bfe5152dd774c12`, 19 June 2025, https://github.com/Alice94/ARP/tree/a57b13e2560d75c6d06505464bfe5152dd774c12. Access: clean local clone and public GitHub. Supports implementation and experiment-script claims.
 - A. I. Osinsky, *Close to optimal column approximations with a single SVD*, arXiv:2308.09068, 2023, https://arxiv.org/abs/2308.09068. Supports the deterministic precursor's title and purpose.
-- Local workspace files under `src/cssp`, read 3 September 2026. Supports the Python-port assessment and smoke-test findings; not an external source.
+- Local workspace files under `src/cssp`, initially read 3 September 2026; implementation mapping and regression tests updated 21 September 2026. Supports the Python-port assessment; not an external source.

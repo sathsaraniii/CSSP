@@ -5,20 +5,28 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
+from cssp._validation import as_real_matrix
 
 Array = NDArray[np.float64]
 
 
 def _validate_indices(A: Array, indices: Array | list[int]) -> Array:
-    A = np.asarray(A, dtype=float)
-    if A.ndim != 2:
-        raise ValueError("A must be a 2-D matrix.")
-
-    J = np.asarray(indices, dtype=int)
-    if J.ndim != 1 or J.size == 0:
+    # Preserve each original value: ordinary NumPy coercion turns [0, True]
+    # into integers before we can reject the Boolean index.
+    raw_indices = np.asarray(indices, dtype=object)
+    if raw_indices.ndim != 1 or raw_indices.size == 0:
         raise ValueError("indices must be a non-empty one-dimensional sequence.")
-    if np.any(J < 0) or np.any(J >= A.shape[1]):
+    if any(
+        isinstance(index, (bool, np.bool_))
+        or not isinstance(index, (int, np.integer))
+        for index in raw_indices
+    ):
+        raise ValueError("indices must contain only integers (not Booleans).")
+    # Check before casting to np.intp, so oversized Python/unsigned integers
+    # cannot wrap around to a different, valid index.
+    if any(index < 0 or index >= A.shape[1] for index in raw_indices):
         raise IndexError("A selected column index is outside the matrix.")
+    J = np.asarray(raw_indices, dtype=np.intp)
     if np.unique(J).size != J.size:
         raise ValueError("Selected column indices must be unique.")
     return J
@@ -26,7 +34,7 @@ def _validate_indices(A: Array, indices: Array | list[int]) -> Array:
 
 def selected_columns(A: Array, indices: Array | list[int]) -> Array:
     """Return the selected-column matrix ``C = A[:, indices]``."""
-    A = np.asarray(A, dtype=float)
+    A = as_real_matrix(A)
     J = _validate_indices(A, indices)
     return A[:, J]
 
@@ -40,7 +48,7 @@ def orthogonal_cssp_approximation(
     repository. ``lstsq`` also handles a numerically rank-deficient selected
     column matrix more safely than an unpivoted QR projection.
     """
-    A = np.asarray(A, dtype=float)
+    A = as_real_matrix(A)
     J = _validate_indices(A, indices)
     C = A[:, J]
     coefficients, _, _, _ = np.linalg.lstsq(C, A, rcond=None)
@@ -58,10 +66,10 @@ def oblique_cssp_approximation(
     the ARP expectation theorem. It requires exactly as many selected indices
     as columns in ``V`` and a nonsingular ``V[J, :]``.
     """
-    A = np.asarray(A, dtype=float)
-    V = np.asarray(V, dtype=float)
+    A = as_real_matrix(A)
+    V = as_real_matrix(V, name="V")
     J = _validate_indices(A, indices)
-    if V.ndim != 2 or V.shape[0] != A.shape[1]:
+    if V.shape[0] != A.shape[1]:
         raise ValueError(
             f"V must have shape (A.shape[1], k); got {V.shape}."
         )
