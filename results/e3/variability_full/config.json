@@ -1,0 +1,41 @@
+{
+  "datasets": [
+    "synthetic",
+    "dna"
+  ],
+  "k": 10,
+  "trials": 100,
+  "m": 160,
+  "n": 120,
+  "numerical_rank": 25,
+  "noise": 0.02,
+  "data_seed": 42,
+  "trial_seed": 0,
+  "dna_path": "/Users/sathsaraniamarasinghe/CSSP/data/DNA_matrix.txt",
+  "run_name": "variability_full",
+  "no_plots": false,
+  "experiment": "E3",
+  "status": "complete",
+  "numpy_version": "2.5.2",
+  "python_version": "3.14.6",
+  "basis": "fixed_exact_svd",
+  "reconstruction": "orthogonal",
+  "tolerance_rule": "100 * float64_eps * max(m,n) * Frobenius_norm(A)",
+  "percentile_note": "Empirical 5th/95th percentiles, not confidence intervals",
+  "datasets_metadata": {
+    "synthetic": {
+      "shape": [
+        160,
+        120
+      ],
+      "sha256": "fa6ff868c6de9ed0d92c21e632a51e9b3e719f36c32cdcfa40a50fb4a6c2c75b"
+    },
+    "dna": {
+      "shape": [
+        22283,
+        107
+      ],
+      "sha256": "ed89ed1ab0544e13c9c2d3ea6cf9a923611c183fcfc96963e86a96a45f5fbdf1"
+    }
+  }
+}

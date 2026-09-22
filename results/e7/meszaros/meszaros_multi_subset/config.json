@@ -1,0 +1,32 @@
+{
+  "pipelines": 6,
+  "k": null,
+  "ks": [
+    10,
+    20,
+    40
+  ],
+  "trials": 10,
+  "seed": 42,
+  "p": 10,
+  "q": 1,
+  "run_name": "meszaros_multi_subset",
+  "no_plots": false,
+  "show_indices": false,
+  "columns": 400,
+  "data_seed": 42,
+  "data_seeds": [
+    42,
+    43,
+    44
+  ],
+  "experiment": "E7 multi-subset",
+  "status": "complete",
+  "completed_subsets": [
+    42,
+    43,
+    44
+  ],
+  "policy": "All predeclared seeds retained, including identical selections/errors. Equal subset weights: trial means for errors, trial medians for timings. Between-subset SD is separate from within-subset trial SD. Subsets may overlap; these are not independent source datasets.",
+  "timing": "Descriptive shared-basis component sums; not controlled standalone timings."
+}

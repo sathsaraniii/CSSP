@@ -116,17 +116,26 @@ def parse_args(argv=None) -> argparse.Namespace:
     add_arguments(parser)
     parser.add_argument("--columns", type=int, default=400,
                         help="number of nonzero columns sampled once")
-    parser.add_argument("--data-seed", type=int, default=42,
+    seeds = parser.add_mutually_exclusive_group()
+    seeds.add_argument("--data-seed", type=int, default=42,
                         help="fixed subset seed, independent of algorithm trials")
+    seeds.add_argument("--data-seeds", type=int, nargs="+",
+                       help="predeclared distinct subset seeds; preserve and summarize all subsets")
     args = validate_arguments(parser, parser.parse_args(argv), default_k=20)
     if args.columns < 1 or args.data_seed < 0:
         parser.error("columns must be positive and data-seed nonnegative")
+    if args.data_seeds is not None and (min(args.data_seeds) < 0 or len(set(args.data_seeds)) != len(args.data_seeds)):
+        parser.error("data-seeds must be distinct nonnegative integers")
     return args
 
 
 def main() -> None:
     args = parse_args()
     A_sparse = load_large_matrix()
+    if args.data_seeds is not None:
+        from _meszaros_subsets import run_subsets
+        run_subsets(A_sparse, args, PROJECT_ROOT, DATASET_PATH, make_reproducible_submatrix)
+        return
     A, original_column_indices = make_reproducible_submatrix(
         A_sparse, number_of_columns=args.columns, random_state=args.data_seed,
     )

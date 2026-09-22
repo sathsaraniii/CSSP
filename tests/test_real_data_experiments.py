@@ -81,3 +81,53 @@ def test_failure_keeps_partial_output(tmp_path,monkeypatch):
     out=tmp_path/"results/e7/fixture/partial"
     assert json.loads((out/"config.json").read_text())["status"]=="incomplete"
     with (out/"raw_results.csv").open() as stream: assert len(list(common.csv.DictReader(stream)))==4
+
+
+def test_multi_subset_run(tmp_path):
+    sparse = pytest.importorskip("scipy.sparse")
+    large = load("run_large_experiment")
+    multi = __import__("_meszaros_subsets")
+    args = large.parse_args(["--pipelines", "6", "--data-seeds", "42", "43", "--columns", "6",
+                             "--k", "2", "--trials", "2", "--no-plots", "--run-name", "multi"])
+    matrix = sparse.csc_matrix(np.random.default_rng(8).normal(size=(9, 10)))
+    out = multi.run_subsets(matrix, args, tmp_path, "fixture", large.make_reproducible_submatrix)
+    config = json.loads((out / "config.json").read_text())
+    assert config["status"] == "complete" and config["completed_subsets"] == [42, 43]
+    with (out / "raw_results.csv").open() as stream: rows = list(common.csv.DictReader(stream))
+    assert len(rows) == 24
+    with (out / "selection_agreement.csv").open() as stream: pairs = list(common.csv.DictReader(stream))
+    assert len(pairs) == 60
+    with (out / "subset_summary.csv").open() as stream: within = list(common.csv.DictReader(stream))
+    with (out / "summary.csv").open() as stream: overall = list(common.csv.DictReader(stream))
+    r = next(r for r in overall if r["method"] == "deterministic_osinsky" and r["metric"] == "relative_frobenius_error")
+    values = [float(r["relative_frobenius_error_mean"]) for r in within if r["method"] == "deterministic_osinsky"]
+    np.testing.assert_allclose(float(r["mean_of_subset_centers"]), np.mean(values))
+    np.testing.assert_allclose(float(r["between_subset_std"]), np.std(values, ddof=1))
+    with pytest.raises(SystemExit, match="Run exists"):
+        multi.run_subsets(matrix, args, tmp_path, "fixture", large.make_reproducible_submatrix)
+
+
+def test_agreement_ignores_order():
+    multi = __import__("_meszaros_subsets")
+    rows = [dict(subset_seed=42,k=2,trial=0,method=m,original_indices=json.dumps(j))
+            for m,j in [("a",[2,7]),("b",[7,2]),("c",[2,8])]]
+    _, pairs, summary = multi.aggregate([], rows)
+    assert [r["same_column_set"] for r in pairs] == [True, False, False]
+    assert summary[0]["same_set_fraction"] == 1
+
+
+@pytest.mark.parametrize("argv", [["--data-seeds", "42", "42"], ["--data-seeds", "-1"],
+                                  ["--data-seed", "42", "--data-seeds", "43"]])
+def test_subset_seed_validation(argv):
+    large = load("run_large_experiment")
+    with pytest.raises(SystemExit): large.parse_args(argv)
+
+
+def test_multi_subset_failure(tmp_path):
+    large = load("run_large_experiment")
+    multi = __import__("_meszaros_subsets")
+    args = large.parse_args(["--data-seeds", "42", "43", "--run-name", "failed", "--no-plots"])
+    def fail(*args, **kwargs): raise RuntimeError("bad subset")
+    with pytest.raises(RuntimeError, match="bad subset"):
+        multi.run_subsets(None, args, tmp_path, "fixture", fail)
+    assert json.loads((tmp_path / "results/e7/meszaros/failed/config.json").read_text())["status"] == "incomplete"

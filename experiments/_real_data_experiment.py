@@ -112,10 +112,10 @@ def plot_comparison(summary, output, dataset):
         fig.savefig(output/("algorithm_time.png" if low else "accuracy.png"),dpi=160); plt.close(fig)
 
 
-def run_real_data(A, args, dataset, source, original_indices=None, sample_ids=None, preprocessing=None):
+def run_real_data(A, args, dataset, source, original_indices=None, sample_ids=None, preprocessing=None, output=None):
     if max(args.ks)>min(A.shape):
         raise ValueError(f"Requested k exceeds matrix dimensions {A.shape}")
-    output=ROOT/"results/e7"/dataset/args.run_name
+    output=Path(output) if output is not None else ROOT/"results/e7"/dataset/args.run_name
     if output.exists():
         raise SystemExit(f"Run already exists: {output}; choose a new --run-name")
     if not args.no_plots:

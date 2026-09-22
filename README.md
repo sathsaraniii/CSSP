@@ -454,6 +454,38 @@ baseline/evaluation/unused reconstruction work is excluded from algorithm time.
 Use E4 for controlled timing claims. Means/SD here describe algorithm trials on
 one fixed dataset, not variation across independent datasets.
 
+### E7 Meszaros: multiple predeclared subsets
+
+To check whether conclusions depend on one sampled subset, reuse the same runner:
+
+```bash
+python experiments/run_large_experiment.py --pipelines 6 --columns 400 \
+  --data-seeds 42 43 44 --ks 10 20 40 --trials 10 --run-name meszaros_multi_subset
+```
+
+`--data-seeds` and `--data-seed` are mutually exclusive. All specified subsets
+are retained, including ties; seeds are not searched until methods disagree.
+This example measures 540 pipeline runs. Each subset reuses the same algorithm
+seed schedule. Subsets can overlap and are not independent source datasets.
+
+Under `results/e7/meszaros/<run-name>/`, `subsets/seed_<seed>/` contains the usual
+E7 configuration, raw/summary CSVs and two plots for each subset. Parent outputs:
+
+- `raw_results.csv`: all measurements, labelled by subset seed.
+- `subset_summary.csv`: within-subset statistics, including trial variability.
+- `summary.csv`: equally weighted means of subset accuracy means or runtime
+  medians, plus between-subset sample SD (not confidence intervals).
+- `selection_agreement.csv`: pairwise method agreement for each subset/rank/trial,
+  comparing original column sets without regard to selection order.
+- `selection_agreement_summary.csv`: agreement counts and fractions by rank and
+  method pair across the balanced subset/trial comparisons.
+
+The parent configuration tracks completion; failed runs preserve child outputs
+and do not silently skip subsets. Existing runs are protected. No new aggregate
+plots are added: per-subset plots retain their correct within-subset uncertainty.
+For E8 plotting, pass individual completed `subsets/seed_<seed>/` directories,
+not the parent multi-subset directory. Single-subset commands are unchanged.
+
 ## E8: full-pipeline accuracy–runtime trade-off
 
 E8 synthesizes **existing E7 measurements**, without rerunning algorithms or
